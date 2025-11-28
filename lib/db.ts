@@ -8,7 +8,6 @@ if (!MONGODB_URI) {
     );
 }
 
-// Global interface to prevent hot-reloading connections in dev
 interface MongooseCache {
     conn: typeof mongoose | null;
     promise: Promise<typeof mongoose> | null;

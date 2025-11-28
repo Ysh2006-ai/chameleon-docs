@@ -1,4 +1,4 @@
-"use client"; // <--- ADD THIS LINE
+"use client";
 
 import * as React from "react";
 import { motion, HTMLMotionProps } from "framer-motion";
@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface GlassCardProps extends HTMLMotionProps<"div"> {
     gradient?: boolean;
+    children?: React.ReactNode; // <--- FIX: Explicitly define children type
 }
 
 const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(

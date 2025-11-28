@@ -1,17 +1,18 @@
 "use client";
 
+import { useFormState } from "react-dom";
+import { authenticate } from "@/actions/login-action";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-
 
 export default function LoginPage() {
-    const router = useRouter();
+    // @ts-ignore - Types for useFormState in Next.js 14 can be strict regarding initial state
+    const [errorMessage, dispatch] = useFormState(authenticate, undefined);
 
     return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background">
-            {/* Ambient Background Gradients */}
             <div className="absolute -left-20 top-20 h-96 w-96 rounded-full bg-purple-500/20 blur-[120px]" />
             <div className="absolute -right-20 bottom-20 h-96 w-96 rounded-full bg-indigo-500/20 blur-[120px]" />
 
@@ -23,37 +24,25 @@ export default function LoginPage() {
                     </p>
                 </div>
 
-                <form className="space-y-4">
+                <form action={dispatch} className="space-y-4">
                     <div className="space-y-2">
                         <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                             Email
                         </label>
-                        <input
-                            className="w-full rounded-lg border border-white/10 bg-black/5 p-3 text-sm outline-none ring-offset-background transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:bg-white/5"
-                            placeholder="you@example.com"
-                            type="email"
-                        />
+                        <Input name="email" type="email" placeholder="you@example.com" required />
                     </div>
                     <div className="space-y-2">
                         <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                             Password
                         </label>
-                        <input
-                            className="w-full rounded-lg border border-white/10 bg-black/5 p-3 text-sm outline-none ring-offset-background transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:bg-white/5"
-                            placeholder="••••••••"
-                            type="password"
-                        />
+                        <Input name="password" type="password" placeholder="••••••••" required />
                     </div>
 
-                    <Button
-                        variant="glass"
-                        className="w-full"
-                        size="lg"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            router.push("/dashboard");
-                        }}
-                    >
+                    {errorMessage && (
+                        <p className="text-sm text-red-500 text-center">{errorMessage}</p>
+                    )}
+
+                    <Button variant="glass" className="w-full" size="lg">
                         Sign In
                     </Button>
                 </form>

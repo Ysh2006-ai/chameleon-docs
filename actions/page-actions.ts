@@ -5,7 +5,7 @@ import Page from "@/models/Page";
 import Project from "@/models/Project";
 import { revalidatePath } from "next/cache";
 
-// 1. Get all pages for a specific project (for Sidebar/Hub)
+// 1. Get all pages for a specific project
 export async function getProjectPages(projectSlug: string) {
     try {
         await connectToDB();
@@ -29,7 +29,7 @@ export async function getProjectPages(projectSlug: string) {
     }
 }
 
-// 2. Get single page content (for Editor/Reader)
+// 2. Get single page content
 export async function getPageContent(projectSlug: string, pageSlug: string) {
     try {
         await connectToDB();
@@ -46,6 +46,7 @@ export async function getPageContent(projectSlug: string, pageSlug: string) {
         return {
             _id: page._id.toString(),
             title: page.title,
+            slug: page.slug,
             content: page.content,
             isPublished: page.isPublished,
         };
@@ -63,8 +64,6 @@ export async function updatePageContent(pageId: string, content: string) {
             updatedAt: new Date()
         });
 
-        // We don't revalidate immediately to keep the editor fast, 
-        // but in a real app you might revalidate the reader path.
         return { success: true };
     } catch (error) {
         return { success: false, error: "Failed to save" };

@@ -8,15 +8,11 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 
 export default function LandingPage() {
-  // Animation variants for staggering children
   const container = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3,
-      },
+      transition: { staggerChildren: 0.1, delayChildren: 0.3 },
     },
   };
 
@@ -55,7 +51,6 @@ export default function LandingPage() {
       </nav>
 
       <main className="relative z-10">
-        {/* Hero Section */}
         <section className="container pt-24 pb-32 text-center lg:pt-32">
           <motion.div
             variants={container}
@@ -93,7 +88,6 @@ export default function LandingPage() {
             </motion.div>
           </motion.div>
 
-          {/* Visual Demo (The "Glass" Effect Showcase) */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -103,29 +97,20 @@ export default function LandingPage() {
             <GlassCard className="w-full max-w-5xl overflow-hidden rounded-xl border border-white/10 bg-black/40 p-1 shadow-2xl backdrop-blur-xl">
               <div className="rounded-lg bg-background/50 p-8 md:p-12 border border-white/5">
                 <div className="flex flex-col gap-8 md:flex-row">
-                  {/* Fake Sidebar */}
                   <div className="hidden w-48 space-y-4 md:block opacity-50">
                     <div className="h-2 w-24 rounded bg-foreground/20" />
                     <div className="space-y-2">
                       <div className="h-2 w-full rounded bg-foreground/10" />
                       <div className="h-2 w-3/4 rounded bg-foreground/10" />
-                      <div className="h-2 w-5/6 rounded bg-foreground/10" />
                     </div>
                   </div>
-                  {/* Fake Content */}
                   <div className="flex-1 space-y-6">
                     <div className="h-8 w-3/4 rounded bg-gradient-to-r from-foreground/20 to-transparent" />
                     <div className="space-y-3">
                       <div className="h-3 w-full rounded bg-foreground/10" />
                       <div className="h-3 w-full rounded bg-foreground/10" />
-                      <div className="h-3 w-2/3 rounded bg-foreground/10" />
                     </div>
                     <div className="mt-8 rounded-lg border border-white/10 bg-black/20 p-6">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="h-3 w-3 rounded-full bg-red-500/20" />
-                        <div className="h-3 w-3 rounded-full bg-yellow-500/20" />
-                        <div className="h-3 w-3 rounded-full bg-green-500/20" />
-                      </div>
                       <div className="space-y-2 font-mono text-xs text-blue-300/50">
                         <div className="flex gap-2"><span className="text-purple-400">const</span> magic = <span className="text-yellow-400">require</span>(<span className="text-green-400">'chameleon'</span>);</div>
                         <div className="flex gap-2">magic.<span className="text-blue-400">init</span>( ... );</div>
@@ -138,7 +123,6 @@ export default function LandingPage() {
           </motion.div>
         </section>
 
-        {/* Features Grid */}
         <section className="container py-24">
           <div className="grid gap-8 md:grid-cols-3">
             {[
@@ -170,7 +154,6 @@ export default function LandingPage() {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-white/10 bg-black/20 py-12">
         <div className="container text-center text-sm text-muted-foreground">
           <p>© 2024 Chameleon Docs. Crafted with precision.</p>

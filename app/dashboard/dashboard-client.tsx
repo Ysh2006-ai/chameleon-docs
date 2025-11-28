@@ -1,17 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus, Eye, ArrowRight } from "lucide-react";
+import { Plus, Eye, ArrowRight, FileText } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
-import { createProject } from "@/actions/project-actions"; // Import the server action
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
 
-// Define the shape based on our Mongoose result
 interface ProjectData {
     _id: string;
     name: string;
@@ -21,10 +16,6 @@ interface ProjectData {
 }
 
 export function DashboardClient({ initialProjects }: { initialProjects: ProjectData[] }) {
-    const [isCreating, setIsCreating] = useState(false);
-    const router = useRouter();
-
-    // Animation variants
     const containerVariants = {
         hidden: { opacity: 0 },
         show: { opacity: 1, transition: { staggerChildren: 0.1 } },
@@ -33,18 +24,6 @@ export function DashboardClient({ initialProjects }: { initialProjects: ProjectD
         hidden: { opacity: 0, y: 20 },
         show: { opacity: 1, y: 0 },
     };
-
-    async function handleCreate(formData: FormData) {
-        const res = await createProject(formData);
-        if (res.success && res.slug) {
-            setIsCreating(false);
-            // Next.js revalidatePath in action will refresh data, 
-            // but we might want to navigate immediately
-            router.push(`/dashboard/${res.slug}`);
-        } else {
-            alert("Error creating project");
-        }
-    }
 
     return (
         <div className="min-h-screen bg-background p-8">
@@ -56,31 +35,27 @@ export function DashboardClient({ initialProjects }: { initialProjects: ProjectD
                         <h1 className="font-heading text-3xl font-bold">Dashboard</h1>
                         <p className="text-muted-foreground">Overview of your documentation ecosystem.</p>
                     </div>
-                    <Button variant="glass" className="gap-2" onClick={() => setIsCreating(!isCreating)}>
-                        <Plus className="h-4 w-4" /> New Project
-                    </Button>
+                    <Link href="/dashboard/new">
+                        <Button variant="glass" className="gap-2">
+                            <Plus className="h-4 w-4" /> New Project
+                        </Button>
+                    </Link>
                 </div>
-
-                {/* Create Project Form (Simple Toggle) */}
-                {isCreating && (
-                    <GlassCard className="p-6">
-                        <form action={handleCreate} className="flex gap-4 items-end">
-                            <div className="w-full space-y-2">
-                                <label className="text-sm font-medium">Project Name</label>
-                                <Input name="name" placeholder="e.g. My Awesome API" required />
-                            </div>
-                            <Button type="submit" variant="default">Create</Button>
-                        </form>
-                    </GlassCard>
-                )}
 
                 {/* Projects Grid */}
                 <div className="space-y-4">
                     <h2 className="font-heading text-xl font-semibold">Your Projects</h2>
 
                     {initialProjects.length === 0 ? (
-                        <div className="text-center py-20 opacity-50">
-                            <p>No projects yet. Create one to get started.</p>
+                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/5 py-20 text-center">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
+                                <FileText className="h-6 w-6" />
+                            </div>
+                            <h3 className="text-lg font-bold">No projects yet</h3>
+                            <p className="text-muted-foreground mb-4">Create your first documentation site to get started.</p>
+                            <Link href="/dashboard/new">
+                                <Button variant="default">Create Project</Button>
+                            </Link>
                         </div>
                     ) : (
                         <motion.div

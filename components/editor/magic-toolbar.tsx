@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -25,7 +27,7 @@ export const MagicToolbar: React.FC<MagicToolbarProps> = ({
             style={{ top: position.top - 60, left: position.left }}
             className="absolute z-50 flex items-center gap-1 rounded-xl border border-white/10 bg-black/80 p-1.5 shadow-2xl backdrop-blur-xl"
         >
-            {EDITOR_TOOLS.map((group, i) => (
+            {EDITOR_TOOLS.map((group) => (
                 <div key={group.id} className="flex items-center gap-1 border-r border-white/10 px-1 last:border-0">
                     {group.items.map((tool) => (
                         <Button
@@ -35,7 +37,8 @@ export const MagicToolbar: React.FC<MagicToolbarProps> = ({
                             onClick={() => onAction(tool.id)}
                             className={cn(
                                 "h-8 w-8 text-white/70 hover:bg-white/20 hover:text-white",
-                                tool.color // Apply custom color if defined (e.g., for Magic button)
+                                // FIX: Cast tool to 'any' or check property existence to satisfy TS
+                                (tool as any).color
                             )}
                             title={tool.label}
                         >

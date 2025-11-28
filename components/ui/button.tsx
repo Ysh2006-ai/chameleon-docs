@@ -1,8 +1,9 @@
+"use client";
+
 import * as React from "react";
-import { Slot } from "@radix-ui/react-slot"; // Install @radix-ui/react-slot if needed, or remove Slot logic
-import { cva, type VariantProps } from "class-variance-authority"; // npm i class-variance-authority
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 
 const buttonVariants = cva(
     "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
@@ -15,7 +16,7 @@ const buttonVariants = cva(
                 secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
                 ghost: "hover:bg-accent hover:text-accent-foreground",
                 link: "text-primary underline-offset-4 hover:underline",
-                // The Star Variant
+                // The Custom Glass Variant
                 glass: "bg-white/10 text-foreground backdrop-blur-md border border-white/10 hover:bg-white/20 hover:scale-[1.02] shadow-sm active:scale-95 transition-all duration-300",
             },
             size: {
@@ -41,8 +42,6 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, variant, size, asChild = false, ...props }, ref) => {
         const Comp = asChild ? Slot : "button";
-        // We wrap in motion.button for micro-interactions if it's not a Slot
-        // For simplicity here, we stick to CSS transitions defined in CVA
         return (
             <Comp
                 className={cn(buttonVariants({ variant, size, className }))}

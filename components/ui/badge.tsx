@@ -14,7 +14,6 @@ const badgeVariants = cva(
                 destructive:
                     "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
                 outline: "text-foreground",
-                // The Bliss Variant
                 glass:
                     "border-white/10 bg-white/5 text-foreground backdrop-blur-md shadow-sm",
                 success:

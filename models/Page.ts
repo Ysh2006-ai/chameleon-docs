@@ -4,9 +4,10 @@ export interface IPage extends Document {
     projectId: mongoose.Types.ObjectId;
     title: string;
     slug: string;
-    content: string; // We'll store Markdown or JSON string here
+    content: string;
     isPublished: boolean;
-    order: number; // For sorting in the sidebar
+    order: number;
+    views: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -19,6 +20,7 @@ const PageSchema = new Schema<IPage>(
         content: { type: String, default: "" },
         isPublished: { type: Boolean, default: false },
         order: { type: Number, default: 0 },
+        views: { type: Number, default: 0 },
     },
     { timestamps: true }
 );

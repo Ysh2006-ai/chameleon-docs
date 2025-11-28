@@ -3,17 +3,20 @@
 import { connectToDB } from "@/lib/db";
 import Project from "@/models/Project";
 import Page from "@/models/Page";
+import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 // 1. Create a New Project
 export async function createProject(formData: FormData) {
+    const session = await auth();
+    if (!session || !session.user?.email) {
+        return { success: false, error: "Unauthorized" };
+    }
+
     const name = formData.get("name") as string;
     // Simple slugify logic
     const slug = name.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
-
-    // In a real app, get this from the session
-    const ownerEmail = "demo@user.com";
+    const ownerEmail = session.user.email;
 
     try {
         await connectToDB();
@@ -21,7 +24,8 @@ export async function createProject(formData: FormData) {
         // Check if slug exists
         const existing = await Project.findOne({ slug });
         if (existing) {
-            throw new Error("Project with this name already exists");
+            // In production, you might append a random string here
+            return { success: false, error: "Project name already exists" };
         }
 
         const newProject = await Project.create({
@@ -35,7 +39,7 @@ export async function createProject(formData: FormData) {
             projectId: newProject._id,
             title: "Introduction",
             slug: "introduction",
-            content: "# Welcome to " + name,
+            content: "# Welcome to " + name + "\n\nStart writing your documentation here.",
             isPublished: true,
             order: 0,
         });
@@ -50,16 +54,19 @@ export async function createProject(formData: FormData) {
 
 // 2. Fetch Projects for Dashboard
 export async function getUserProjects() {
-    const ownerEmail = "demo@user.com"; // Replace with auth session
+    const session = await auth();
+    if (!session || !session.user?.email) return [];
+
     try {
         await connectToDB();
-        const projects = await Project.find({ ownerEmail }).sort({ updatedAt: -1 }).lean();
+        const projects = await Project.find({ ownerEmail: session.user.email })
+            .sort({ updatedAt: -1 })
+            .lean();
 
-        // Convert _id to string for React serialization
         return projects.map((p: any) => ({
             ...p,
             _id: p._id.toString(),
-            createdAt: p.createdAt.toISOString(), // formatting for UI
+            createdAt: p.createdAt.toISOString(),
         }));
     } catch (error) {
         return [];
@@ -79,5 +86,36 @@ export async function getProjectDetails(slug: string) {
         };
     } catch (error) {
         return null;
+    }
+}
+
+// 4. Update Project Settings (Theme & Visibility)
+export async function updateProjectSettings(
+    projectSlug: string,
+    settings: { color: string; font: string; isPublic: boolean }
+) {
+    try {
+        const session = await auth();
+        if (!session?.user?.email) return { error: "Unauthorized" };
+
+        await connectToDB();
+
+        const project = await Project.findOne({ slug: projectSlug, ownerEmail: session.user.email });
+
+        if (!project) return { error: "Project not found" };
+
+        project.theme.color = settings.color;
+        project.theme.font = settings.font;
+        project.isPublic = settings.isPublic;
+
+        await project.save();
+
+        revalidatePath(`/dashboard/${projectSlug}`);
+        revalidatePath(`/p/${projectSlug}`);
+
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to update settings" };
     }
 }

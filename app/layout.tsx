@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider"; // We will create this
+import { ThemeProvider } from "@/components/theme-provider";
+import { CommandMenu } from "@/components/command-menu";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
@@ -32,6 +33,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <CommandMenu />
           {children}
         </ThemeProvider>
       </body>

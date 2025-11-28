@@ -14,7 +14,6 @@ interface MarkdownRendererProps {
 
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
     return (
-        // FIX: Wrap ReactMarkdown in a div to apply the className
         <div className={cn("space-y-6", className)}>
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -51,7 +50,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                         <ol className="my-6 ml-6 list-decimal [&>li]:mt-2 text-muted-foreground" {...props} />
                     ),
 
-                    // 5. Code Blocks & Inline Code
+                    // 5. Code Blocks
                     code: ({ node, inline, className, children, ...props }: any) => {
                         const match = /language-(\w+)/.exec(className || "");
                         return !inline && match ? (
@@ -70,7 +69,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                                     customStyle={{
                                         margin: 0,
                                         borderRadius: 0,
-                                        background: "#282a36", // Match Dracula background
+                                        background: "#282a36",
                                         padding: "1.5rem",
                                         fontSize: "0.9rem",
                                     }}

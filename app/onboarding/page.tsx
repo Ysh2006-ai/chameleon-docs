@@ -84,6 +84,7 @@ export default function OnboardingPage() {
                                     {["Software Engineer", "Product Manager", "Technical Writer"].map((role) => (
                                         <button
                                             key={role}
+                                            onClick={handleNext}
                                             className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 p-4 text-left text-sm transition-all hover:border-primary hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
                                         >
                                             {role}

@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     try {
         const { content, mode } = await req.json();
 
-        // Construct the Prompt
+        // Construct the Prompt based on the selected mode
         let systemInstruction = "";
         if (mode === "simple") {
             systemInstruction = `
@@ -29,13 +29,13 @@ export async function POST(req: Request) {
 
         const prompt = `${systemInstruction}\n\n---\n\nOriginal Content:\n${content}`;
 
-        // Use the new AI SDK Core API
+        // Use the AI SDK Core API with Gemini Flash for speed
         const result = await streamText({
             model: google("gemini-2.0-flash"),
             prompt: prompt,
         });
 
-        // Return a text stream directly (compatible with your frontend reader)
+        // Return a text stream directly
         return result.toTextStreamResponse();
 
     } catch (error) {

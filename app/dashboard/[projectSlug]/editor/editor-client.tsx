@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Save, ChevronLeft, Check } from "lucide-react";
+import { Save, ChevronLeft, Check, Settings, MonitorPlay } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
+import { MagicToolbar } from "@/components/editor/magic-toolbar";
 import { updatePageContent } from "@/actions/page-actions";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,7 @@ interface EditorClientProps {
         _id: string;
         title: string;
         content: string;
+        slug: string;
     };
 }
 
@@ -23,13 +25,39 @@ export function EditorClient({ projectSlug, pages, activePage }: EditorClientPro
     const [content, setContent] = useState(activePage.content);
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(false);
+
+    // Toolbar State
+    const [toolbarVisible, setToolbarVisible] = useState(false);
+    const [toolbarPos, setToolbarPos] = useState({ top: 0, left: 0 });
+
     const router = useRouter();
+    const editorRef = useRef<HTMLTextAreaElement>(null);
 
     // Reset state when switching pages
     useEffect(() => {
         setContent(activePage.content);
         setLastSaved(false);
     }, [activePage]);
+
+    // Handle Text Selection to show Toolbar
+    const handleSelect = () => {
+        const selection = window.getSelection();
+        // Only show if selection is inside our textarea (approximated here by focus)
+        if (!selection || selection.isCollapsed || document.activeElement !== editorRef.current) {
+            setToolbarVisible(false);
+            return;
+        }
+
+        // In a real textarea, getting exact coordinates of selection is hard. 
+        // We approximate or use a library like 'textarea-caret' in production.
+        // For this blueprint, we center it above the cursor roughly.
+        setToolbarVisible(true);
+        // Note: Actual positioning logic for textarea is complex; simplified here:
+        const rect = editorRef.current?.getBoundingClientRect();
+        if (rect) {
+            setToolbarPos({ top: rect.top + 100, left: rect.left + 100 });
+        }
+    };
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -80,18 +108,13 @@ export function EditorClient({ projectSlug, pages, activePage }: EditorClientPro
                         disabled={isSaving}
                         className={cn(lastSaved && "border-green-500/50 text-green-500")}
                     >
-                        {isSaving ? (
-                            "Saving..."
-                        ) : lastSaved ? (
-                            <>
-                                <Check className="mr-2 h-4 w-4" /> Saved
-                            </>
-                        ) : (
-                            <>
-                                <Save className="mr-2 h-4 w-4" /> Save
-                            </>
-                        )}
+                        {isSaving ? "Saving..." : lastSaved ? <><Check className="mr-2 h-4 w-4" /> Saved</> : <><Save className="mr-2 h-4 w-4" /> Save</>}
                     </Button>
+                    <Link href={`/p/${projectSlug}?page=${activePage.slug}`} target="_blank">
+                        <Button variant="default" size="sm">
+                            <MonitorPlay className="mr-2 h-4 w-4" /> View Live
+                        </Button>
+                    </Link>
                 </div>
             </header>
 
@@ -108,7 +131,7 @@ export function EditorClient({ projectSlug, pages, activePage }: EditorClientPro
                                 onClick={() => router.push(`?page=${page.slug}`)}
                                 className={cn(
                                     "cursor-pointer rounded-md px-3 py-2 text-sm transition-colors",
-                                    page.slug === activePage.title.toLowerCase().replace(/ /g, "-") || page._id === activePage._id
+                                    page.slug === activePage.slug
                                         ? "bg-white/10 text-primary font-medium"
                                         : "text-muted-foreground hover:bg-white/5 hover:text-primary"
                                 )}
@@ -122,22 +145,27 @@ export function EditorClient({ projectSlug, pages, activePage }: EditorClientPro
                 {/* Canvas */}
                 <main className="relative flex-1 overflow-y-auto p-8 lg:p-12">
                     <div className="mx-auto max-w-3xl">
-                        <input
-                            type="text"
-                            readOnly
-                            value={activePage.title}
-                            className="mb-8 w-full bg-transparent font-heading text-4xl font-bold text-foreground outline-none"
-                        />
+                        <h1 className="mb-8 w-full bg-transparent font-heading text-4xl font-bold text-foreground outline-none">
+                            {activePage.title}
+                        </h1>
 
                         <GlassCard className="min-h-[600px] p-0" gradient={false}>
                             <textarea
+                                ref={editorRef}
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
+                                onSelect={handleSelect}
                                 className="h-full min-h-[600px] w-full resize-none bg-transparent p-8 font-mono text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/30"
                                 spellCheck={false}
                                 placeholder="# Start writing with Markdown..."
                             />
                         </GlassCard>
+
+                        <MagicToolbar
+                            isVisible={toolbarVisible}
+                            position={toolbarPos}
+                            onAction={(id) => console.log("Tool clicked:", id)}
+                        />
                     </div>
                 </main>
             </div>

@@ -4,7 +4,7 @@ export interface IProject extends Document {
     name: string;
     slug: string;
     description?: string;
-    ownerEmail: string; // Linking by email for simplicity (or use ObjectId if using Auth)
+    ownerEmail: string;
     isPublic: boolean;
     theme: {
         color: string;
