@@ -1,113 +1,181 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { ArrowRight, Sparkles, Zap, Layers, Github } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { GlassCard } from "@/components/ui/glass-card";
+import { Badge } from "@/components/ui/badge";
+
+export default function LandingPage() {
+  // Animation variants for staggering children
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.3,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } },
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="min-h-screen bg-background text-foreground selection:bg-indigo-500/30">
+
+      {/* Background Ambience */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-purple-500/10 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-indigo-500/10 blur-[120px]" />
+      </div>
+
+      {/* Navbar */}
+      <nav className="relative z-50 border-b border-white/5 bg-background/60 backdrop-blur-xl">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 shadow-lg shadow-purple-500/20" />
+            <span className="font-heading text-xl font-bold tracking-tight">
+              Chameleon<span className="text-primary/40">Docs</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/login">
+              <Button variant="ghost" size="sm">Log In</Button>
+            </Link>
+            <Link href="/signup">
+              <Button variant="glass" size="sm">Get Started</Button>
+            </Link>
+          </div>
         </div>
-      </div>
+      </nav>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+      <main className="relative z-10">
+        {/* Hero Section */}
+        <section className="container pt-24 pb-32 text-center lg:pt-32">
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="mx-auto max-w-4xl space-y-8"
+          >
+            <motion.div variants={item} className="flex justify-center">
+              <Badge variant="glass" className="px-4 py-1.5 text-sm">
+                <Sparkles className="mr-2 h-3 w-3 text-yellow-400" />
+                v2.0 is now Public Beta
+              </Badge>
+            </motion.div>
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+            <motion.h1 variants={item} className="font-heading text-5xl font-bold tracking-tight sm:text-7xl bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/40">
+              Documentation that <br />
+              <span className="text-foreground">Adapts to You.</span>
+            </motion.h1>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+            <motion.p variants={item} className="mx-auto max-w-2xl text-lg text-muted-foreground leading-relaxed">
+              Stop writing static docs. Build living knowledge bases that transform
+              from simple summaries to deep technical dives with a single click.
+            </motion.p>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
+            <motion.div variants={item} className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              <Link href="/dashboard">
+                <Button size="lg" className="h-12 px-8 text-base shadow-xl shadow-indigo-500/20">
+                  Start Building Free
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Button variant="glass" size="lg" className="h-12 px-8 text-base">
+                <Github className="mr-2 h-4 w-4" /> Star on GitHub
+              </Button>
+            </motion.div>
+          </motion.div>
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+          {/* Visual Demo (The "Glass" Effect Showcase) */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.8 }}
+            className="mt-20 flex justify-center px-4"
+          >
+            <GlassCard className="w-full max-w-5xl overflow-hidden rounded-xl border border-white/10 bg-black/40 p-1 shadow-2xl backdrop-blur-xl">
+              <div className="rounded-lg bg-background/50 p-8 md:p-12 border border-white/5">
+                <div className="flex flex-col gap-8 md:flex-row">
+                  {/* Fake Sidebar */}
+                  <div className="hidden w-48 space-y-4 md:block opacity-50">
+                    <div className="h-2 w-24 rounded bg-foreground/20" />
+                    <div className="space-y-2">
+                      <div className="h-2 w-full rounded bg-foreground/10" />
+                      <div className="h-2 w-3/4 rounded bg-foreground/10" />
+                      <div className="h-2 w-5/6 rounded bg-foreground/10" />
+                    </div>
+                  </div>
+                  {/* Fake Content */}
+                  <div className="flex-1 space-y-6">
+                    <div className="h-8 w-3/4 rounded bg-gradient-to-r from-foreground/20 to-transparent" />
+                    <div className="space-y-3">
+                      <div className="h-3 w-full rounded bg-foreground/10" />
+                      <div className="h-3 w-full rounded bg-foreground/10" />
+                      <div className="h-3 w-2/3 rounded bg-foreground/10" />
+                    </div>
+                    <div className="mt-8 rounded-lg border border-white/10 bg-black/20 p-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="h-3 w-3 rounded-full bg-red-500/20" />
+                        <div className="h-3 w-3 rounded-full bg-yellow-500/20" />
+                        <div className="h-3 w-3 rounded-full bg-green-500/20" />
+                      </div>
+                      <div className="space-y-2 font-mono text-xs text-blue-300/50">
+                        <div className="flex gap-2"><span className="text-purple-400">const</span> magic = <span className="text-yellow-400">require</span>(<span className="text-green-400">'chameleon'</span>);</div>
+                        <div className="flex gap-2">magic.<span className="text-blue-400">init</span>( ... );</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+          </motion.div>
+        </section>
+
+        {/* Features Grid */}
+        <section className="container py-24">
+          <div className="grid gap-8 md:grid-cols-3">
+            {[
+              {
+                icon: Zap,
+                title: "Zero Latency",
+                desc: "Powered by Next.js 14 and React Server Components for instant page loads."
+              },
+              {
+                icon: Layers,
+                title: "Atomic Design",
+                desc: "Built on a strict atomic system. Every component is reusable and type-safe."
+              },
+              {
+                icon: Sparkles,
+                title: "Visual Bliss",
+                desc: "Glassmorphism, smooth animations, and eye-care colors out of the box."
+              }
+            ].map((feature, i) => (
+              <GlassCard key={i} className="p-8 hover:bg-white/10 transition-colors">
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <feature.icon className="h-6 w-6" />
+                </div>
+                <h3 className="mb-2 font-heading text-xl font-bold">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.desc}</p>
+              </GlassCard>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-white/10 bg-black/20 py-12">
+        <div className="container text-center text-sm text-muted-foreground">
+          <p>© 2024 Chameleon Docs. Crafted with precision.</p>
+        </div>
+      </footer>
+    </div>
   );
 }
