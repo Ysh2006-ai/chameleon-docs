@@ -21,6 +21,22 @@ export async function registerUser(formData: FormData) {
         return { error: "All fields are required." };
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return { error: "Invalid email format." };
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+        return { error: "Password must be at least 8 characters." };
+    }
+
+    // Validate name length
+    if (name.trim().length < 2 || name.trim().length > 50) {
+        return { error: "Name must be between 2 and 50 characters." };
+    }
+
     try {
         await connectToDB();
 

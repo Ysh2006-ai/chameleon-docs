@@ -40,8 +40,29 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Chameleon Docs",
-  description: "A visually blissful documentation platform.",
+  title: {
+    default: "Chameleon Docs",
+    template: "%s | Chameleon Docs",
+  },
+  description: "A visually blissful documentation platform that adapts to your reading level.",
+  keywords: ["documentation", "docs", "knowledge base", "AI", "writing"],
+  authors: [{ name: "Chameleon Docs" }],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "Chameleon Docs",
+    title: "Chameleon Docs",
+    description: "A visually blissful documentation platform that adapts to your reading level.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Chameleon Docs",
+    description: "A visually blissful documentation platform that adapts to your reading level.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

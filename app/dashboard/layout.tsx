@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { LayoutDashboard, Settings, LogOut, Layers, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOutAction } from "@/actions/auth-actions";
+import { ChameleonLogo } from "@/components/ChameleonLogo";
 
 const SIDEBAR_ITEMS = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
@@ -23,10 +24,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <aside className="fixed left-4 top-4 bottom-4 w-64 hidden lg:flex flex-col rounded-2xl border border-white/5 bg-white/5 backdrop-blur-2xl p-4 shadow-2xl z-50">
                 <div className="mb-8 px-4 py-2">
                     <Link href="/" className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-accent to-accent" />
+                        <ChameleonLogo size={32} />
                         <span className="font-heading font-bold text-xl ">Chameleon</span>
                     </Link>
                 </div>
+
 
                 <nav className="flex-1 space-y-2">
                     {SIDEBAR_ITEMS.map((item) => {

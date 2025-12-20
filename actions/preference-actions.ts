@@ -36,7 +36,6 @@ export async function getUserPreferences() {
 export async function hasCompletedOnboarding() {
     const session = await auth();
     if (!session?.user?.email) {
-        console.log("hasCompletedOnboarding: No session");
         return false;
     }
 
@@ -45,12 +44,10 @@ export async function hasCompletedOnboarding() {
         // Use findOne without lean() to get Mongoose document with defaults
         const user = await User.findOne({ email: session.user.email });
         if (!user) {
-            console.log("hasCompletedOnboarding: User not found");
             return false;
         }
         
         const completed = user.simplificationPreferences?.hasCompletedOnboarding === true;
-        console.log("hasCompletedOnboarding:", completed, "for user:", session.user.email);
         return completed;
     } catch (error) {
         console.error("Error checking onboarding:", error);
@@ -68,7 +65,6 @@ export async function saveOnboardingPreferences(preferences: {
 }) {
     const session = await auth();
     if (!session?.user?.email) {
-        console.log("saveOnboardingPreferences: No session");
         return { success: false, error: "Unauthorized" };
     }
 
@@ -116,11 +112,8 @@ export async function saveOnboardingPreferences(preferences: {
         );
 
         if (!result) {
-            console.log("saveOnboardingPreferences: User not found");
             return { success: false, error: "User not found" };
         }
-
-        console.log("saveOnboardingPreferences: Saved successfully, hasCompletedOnboarding:", result.simplificationPreferences?.hasCompletedOnboarding);
 
         revalidatePath("/dashboard");
         revalidatePath("/onboarding");

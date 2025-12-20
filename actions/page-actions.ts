@@ -120,3 +120,92 @@ export async function updatePageSection(pageId: string, section: string) {
         return { success: false, error: "Failed to update section" };
     }
 }
+
+// 7. Delete Page
+export async function deletePage(pageId: string, projectSlug: string) {
+    try {
+        await connectToDB();
+        const page = await Page.findById(pageId);
+        if (!page) {
+            return { success: false, error: "Page not found" };
+        }
+
+        await Page.findByIdAndDelete(pageId);
+        
+        revalidatePath(`/dashboard/${projectSlug}`);
+        revalidatePath(`/p/${projectSlug}`);
+        
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting page:", error);
+        return { success: false, error: "Failed to delete page" };
+    }
+}
+
+// 8. Update Page Title
+export async function updatePageTitle(pageId: string, newTitle: string, projectSlug: string) {
+    try {
+        await connectToDB();
+        
+        if (!newTitle || newTitle.trim().length === 0) {
+            return { success: false, error: "Title cannot be empty" };
+        }
+
+        await Page.findByIdAndUpdate(pageId, { 
+            title: newTitle.trim(),
+            updatedAt: new Date()
+        });
+
+        revalidatePath(`/dashboard/${projectSlug}`);
+        revalidatePath(`/p/${projectSlug}`);
+        
+        return { success: true };
+    } catch (error) {
+        console.error("Error updating page title:", error);
+        return { success: false, error: "Failed to update title" };
+    }
+}
+
+// 9. Update Page Slug
+export async function updatePageSlug(pageId: string, newSlug: string, projectSlug: string) {
+    try {
+        await connectToDB();
+        
+        // Validate slug format (URL-safe)
+        const sanitizedSlug = newSlug.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
+        
+        if (!sanitizedSlug || sanitizedSlug.length === 0) {
+            return { success: false, error: "Slug cannot be empty" };
+        }
+
+        // Get the project to check for duplicate slugs
+        const project = await Project.findOne({ slug: projectSlug });
+        if (!project) {
+            return { success: false, error: "Project not found" };
+        }
+
+        // Check if slug already exists in this project (excluding current page)
+        const existingPage = await Page.findOne({
+            projectId: project._id,
+            slug: sanitizedSlug,
+            _id: { $ne: pageId }
+        });
+
+        if (existingPage) {
+            return { success: false, error: "A page with this slug already exists" };
+        }
+
+        await Page.findByIdAndUpdate(pageId, { 
+            slug: sanitizedSlug,
+            updatedAt: new Date()
+        });
+
+        revalidatePath(`/dashboard/${projectSlug}`);
+        revalidatePath(`/p/${projectSlug}`);
+        
+        return { success: true, slug: sanitizedSlug };
+    } catch (error) {
+        console.error("Error updating page slug:", error);
+        return { success: false, error: "Failed to update slug" };
+    }
+}

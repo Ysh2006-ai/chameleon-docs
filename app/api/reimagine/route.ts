@@ -54,7 +54,24 @@ Only return the modified text, no explanations.
 
 export async function POST(req: Request) {
     try {
-        const { content, simplificationLevel, mode, prompt: customPrompt } = await req.json();
+        const body = await req.json();
+        const { content, simplificationLevel, mode, prompt: customPrompt } = body;
+
+        // Input validation
+        if (!content || typeof content !== 'string') {
+            return new Response(JSON.stringify({ error: "Content is required" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+
+        // Limit content size to prevent abuse (max 50KB)
+        if (content.length > 50000) {
+            return new Response(JSON.stringify({ error: "Content too large" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
 
         // Construct the Prompt based on the selected level or mode
         let systemInstruction = "";
@@ -84,7 +101,7 @@ Instruction: ${customPrompt}
 
         // Use the AI SDK Core API with Gemini Flash for speed
         const result = await streamText({
-            model: google("gemini-2.0-flash"),
+            model: google("gemini-2.5-flash"),
             prompt: fullPrompt,
         });
 

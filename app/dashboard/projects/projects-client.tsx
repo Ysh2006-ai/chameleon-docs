@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -60,6 +60,33 @@ export function ProjectsClient({ initialProjects }: ProjectsClientProps) {
     const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const [isMounted, setIsMounted] = useState(false);
+
+    // Fix hydration mismatch - only render locale-dependent content after mount
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setOpenDropdown(null);
+            }
+        };
+
+        if (openDropdown) {
+            // Use setTimeout to delay adding the listener, preventing immediate closure
+            const timeoutId = setTimeout(() => {
+                document.addEventListener("click", handleClickOutside);
+            }, 0);
+            return () => {
+                clearTimeout(timeoutId);
+                document.removeEventListener("click", handleClickOutside);
+            };
+        }
+    }, [openDropdown]);
 
     // Filter and sort projects
     const filteredProjects = useMemo(() => {
@@ -295,67 +322,7 @@ export function ProjectsClient({ initialProjects }: ProjectsClientProps) {
                 >
                     {filteredProjects.map((project) => (
                         <motion.div key={project._id} variants={itemVariants}>
-                            <GlassCard className="group relative h-full transition-all hover:border-accent/50 hover:bg-white/10 p-6">
-                                {/* Dropdown Menu */}
-                                <div className="absolute right-4 top-4 z-10">
-                                    <div className="relative">
-                                        <button
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                setOpenDropdown(openDropdown === project._id ? null : project._id);
-                                            }}
-                                            className="rounded-md p-2 text-muted-foreground opacity-0 transition-all hover:bg-white/10 hover:text-foreground group-hover:opacity-100"
-                                        >
-                                            <MoreVertical className="h-4 w-4" />
-                                        </button>
-
-                                        <AnimatePresence>
-                                            {openDropdown === project._id && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                                    className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-white/10 bg-background/95 backdrop-blur-xl shadow-xl overflow-hidden z-50"
-                                                >
-                                                    <Link
-                                                        href={`/dashboard/${project.slug}`}
-                                                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-white/5 transition-colors"
-                                                    >
-                                                        <Edit3 className="h-4 w-4" />
-                                                        Edit Project
-                                                    </Link>
-                                                    <Link
-                                                        href={`/p/${project.slug}`}
-                                                        target="_blank"
-                                                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-white/5 transition-colors"
-                                                    >
-                                                        <ExternalLink className="h-4 w-4" />
-                                                        View Live
-                                                    </Link>
-                                                    <button
-                                                        onClick={() => copyToClipboard(`${window.location.origin}/p/${project.slug}`)}
-                                                        className="flex w-full items-center gap-2 px-4 py-2.5 text-sm hover:bg-white/5 transition-colors"
-                                                    >
-                                                        <Copy className="h-4 w-4" />
-                                                        Copy Link
-                                                    </button>
-                                                    <div className="border-t border-white/10" />
-                                                    <button
-                                                        onClick={() => {
-                                                            setOpenDropdown(null);
-                                                            setShowDeleteModal(project.slug);
-                                                        }}
-                                                        className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                        Delete Project
-                                                    </button>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
-                                </div>
-
+                            <GlassCard className="group relative h-full transition-all hover:border-accent/50 hover:bg-white/10 p-6 overflow-visible">
                                 <Link href={`/dashboard/${project.slug}`} className="block">
                                     <div className="mb-6 flex items-start justify-between">
                                         <div
@@ -366,20 +333,87 @@ export function ProjectsClient({ initialProjects }: ProjectsClientProps) {
                                         >
                                             {project.emoji || "📚"}
                                         </div>
-                                        <Badge
-                                            variant={project.isPublic ? "success" : "secondary"}
-                                            className="rounded-sm"
-                                        >
-                                            {project.isPublic ? (
-                                                <span className="flex items-center gap-1">
-                                                    <Globe className="h-3 w-3" /> Public
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-center gap-1">
-                                                    <Lock className="h-3 w-3" /> Private
-                                                </span>
-                                            )}
-                                        </Badge>
+                                        <div className="flex items-center gap-2">
+                                            <Badge
+                                                variant={project.isPublic ? "success" : "secondary"}
+                                                className="rounded-sm"
+                                            >
+                                                {project.isPublic ? (
+                                                    <span className="flex items-center gap-1">
+                                                        <Globe className="h-3 w-3" /> Public
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1">
+                                                        <Lock className="h-3 w-3" /> Private
+                                                    </span>
+                                                )}
+                                            </Badge>
+                                            {/* Dropdown Menu Trigger */}
+                                            <div className="relative" ref={openDropdown === project._id ? dropdownRef : null}>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setOpenDropdown(openDropdown === project._id ? null : project._id);
+                                                    }}
+                                                    className="rounded-md p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-white/10 hover:text-foreground group-hover:opacity-100"
+                                                >
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </button>
+
+                                                <AnimatePresence>
+                                                    {openDropdown === project._id && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-white/10 bg-background/95 backdrop-blur-xl shadow-xl overflow-hidden z-[100]"
+                                                        >
+                                                            <Link
+                                                                href={`/dashboard/${project.slug}`}
+                                                                className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-white/5 transition-colors"
+                                                            >
+                                                                <Edit3 className="h-4 w-4" />
+                                                                Edit Project
+                                                            </Link>
+                                                            <Link
+                                                                href={`/p/${project.slug}`}
+                                                                target="_blank"
+                                                                className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-white/5 transition-colors"
+                                                            >
+                                                                <ExternalLink className="h-4 w-4" />
+                                                                View Live
+                                                            </Link>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    copyToClipboard(`${window.location.origin}/p/${project.slug}`);
+                                                                }}
+                                                                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm hover:bg-white/5 transition-colors"
+                                                            >
+                                                                <Copy className="h-4 w-4" />
+                                                                Copy Link
+                                                            </button>
+                                                            <div className="border-t border-white/10" />
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    setOpenDropdown(null);
+                                                                    setShowDeleteModal(project.slug);
+                                                                }}
+                                                                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                                Delete Project
+                                                            </button>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">
@@ -399,7 +433,7 @@ export function ProjectsClient({ initialProjects }: ProjectsClientProps) {
                                     <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-muted-foreground">
                                         <span className="flex items-center gap-1">
                                             <Calendar className="h-3 w-3" />
-                                            {new Date(project.createdAt).toLocaleDateString()}
+                                            {isMounted ? new Date(project.createdAt).toLocaleDateString() : ""}
                                         </span>
                                         <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0 text-accent" />
                                     </div>
@@ -449,7 +483,7 @@ export function ProjectsClient({ initialProjects }: ProjectsClientProps) {
 
                                     <span className="hidden md:flex items-center gap-1 text-xs text-muted-foreground">
                                         <Clock className="h-3 w-3" />
-                                        {new Date(project.createdAt).toLocaleDateString()}
+                                        {isMounted ? new Date(project.createdAt).toLocaleDateString() : ""}
                                     </span>
 
                                     <div className="flex items-center gap-1">
@@ -534,13 +568,7 @@ export function ProjectsClient({ initialProjects }: ProjectsClientProps) {
                 )}
             </AnimatePresence>
 
-            {/* Click outside to close dropdown */}
-            {openDropdown && (
-                <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setOpenDropdown(null)}
-                />
-            )}
+
         </div>
     );
 }

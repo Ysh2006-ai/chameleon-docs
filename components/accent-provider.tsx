@@ -16,7 +16,7 @@ const THEME_CLASSES = [
 export function AccentProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         // Get saved accent color from localStorage
-        const savedAccent = localStorage.getItem("chameleon-accent") || "indigo";
+        const savedAccent = localStorage.getItem("chameleon-accent") || "orange";
         
         // Remove all theme classes first
         document.documentElement.classList.remove(...THEME_CLASSES);

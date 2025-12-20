@@ -8,9 +8,7 @@ export async function incrementPageView(pageId: string) {
     try {
         await connectToDB();
 
-        console.log(`[Analytics] Incrementing view for page: ${pageId}`);
-
-        await Page.findByIdAndUpdate(
+                await Page.findByIdAndUpdate(
             pageId,
             { $inc: { views: 1 } },
             { new: true }

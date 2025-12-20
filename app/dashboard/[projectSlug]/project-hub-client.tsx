@@ -6,16 +6,17 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Settings, FileText, Plus, Edit3, ArrowUpRight,
-    Palette, Check, Globe, Lock, MoreVertical, Folder, Eye
+    Palette, Check, Globe, Lock, MoreVertical, Folder, Eye,
+    Pencil, Trash2, Link2, X, AlertTriangle
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
 import { GlassTabs } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Select } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { updateProjectSettings } from "@/actions/project-actions";
-import { createPage, publishPage } from "@/actions/page-actions";
+import { createPage, publishPage, deletePage, updatePageTitle, updatePageSlug } from "@/actions/page-actions";
 import { cn } from "@/lib/utils";
 import {
     DropdownMenu,
@@ -51,6 +52,33 @@ function SimpleSwitch({ checked, onCheckedChange, className }: { checked: boolea
     );
 }
 
+// Modal Components
+function Modal({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children: React.ReactNode }) {
+    if (!isOpen) return null;
+    
+    return (
+        <AnimatePresence>
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                onClick={onClose}
+            >
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="relative w-full max-w-md mx-4"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {children}
+                </motion.div>
+            </motion.div>
+        </AnimatePresence>
+    );
+}
+
 export function ProjectHubClient({ project, pages, analytics }: any) {
     const [activeTab, setActiveTab] = useState("docs");
     const router = useRouter();
@@ -61,6 +89,17 @@ export function ProjectHubClient({ project, pages, analytics }: any) {
     const [isPublic, setIsPublic] = useState(project.isPublic || false);
     const [emoji, setEmoji] = useState(project.emoji || "📚");
     const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+    // Modal states
+    const [renameModal, setRenameModal] = useState<{ isOpen: boolean; page: any }>({ isOpen: false, page: null });
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; page: any }>({ isOpen: false, page: null });
+    const [slugModal, setSlugModal] = useState<{ isOpen: boolean; page: any }>({ isOpen: false, page: null });
+    
+    // Form states
+    const [newTitle, setNewTitle] = useState("");
+    const [newSlug, setNewSlug] = useState("");
+    const [modalError, setModalError] = useState("");
+    const [isModalLoading, setIsModalLoading] = useState(false);
 
     // Emoji options - define outside component to avoid re-creation
     const EMOJI_OPTIONS = ["📚", "📖", "📝", "✨", "🚀", "💡", "🎯", "⚡", "🔥", "💎", "🌟", "📋", "📁", "🎨", "🔧", "📊", "🌐", "💻", "📱", ""];
@@ -87,6 +126,79 @@ export function ProjectHubClient({ project, pages, analytics }: any) {
         await updateProjectSettings(project.slug, { color, font, isPublic, emoji });
         setIsSavingSettings(false);
         router.refresh();
+    };
+
+    // Rename handlers
+    const openRenameModal = (page: any) => {
+        setNewTitle(page.title);
+        setModalError("");
+        setRenameModal({ isOpen: true, page });
+    };
+
+    const handleRename = async () => {
+        if (!newTitle.trim()) {
+            setModalError("Title cannot be empty");
+            return;
+        }
+        setIsModalLoading(true);
+        setModalError("");
+        
+        const res = await updatePageTitle(renameModal.page._id, newTitle, project.slug);
+        
+        if (res.success) {
+            setRenameModal({ isOpen: false, page: null });
+            router.refresh();
+        } else {
+            setModalError(res.error || "Failed to rename page");
+        }
+        setIsModalLoading(false);
+    };
+
+    // Delete handlers
+    const openDeleteModal = (page: any) => {
+        setModalError("");
+        setDeleteModal({ isOpen: true, page });
+    };
+
+    const handleDelete = async () => {
+        setIsModalLoading(true);
+        setModalError("");
+        
+        const res = await deletePage(deleteModal.page._id, project.slug);
+        
+        if (res.success) {
+            setDeleteModal({ isOpen: false, page: null });
+            router.refresh();
+        } else {
+            setModalError(res.error || "Failed to delete page");
+        }
+        setIsModalLoading(false);
+    };
+
+    // Slug handlers
+    const openSlugModal = (page: any) => {
+        setNewSlug(page.slug);
+        setModalError("");
+        setSlugModal({ isOpen: true, page });
+    };
+
+    const handleSlugUpdate = async () => {
+        if (!newSlug.trim()) {
+            setModalError("Slug cannot be empty");
+            return;
+        }
+        setIsModalLoading(true);
+        setModalError("");
+        
+        const res = await updatePageSlug(slugModal.page._id, newSlug, project.slug);
+        
+        if (res.success) {
+            setSlugModal({ isOpen: false, page: null });
+            router.refresh();
+        } else {
+            setModalError(res.error || "Failed to update slug");
+        }
+        setIsModalLoading(false);
     };
 
     // Group pages by section
@@ -171,7 +283,6 @@ export function ProjectHubClient({ project, pages, analytics }: any) {
                                                     <span className="font-medium truncate max-w-[70%]">{page.title}</span>
                                                     <span className="text-muted-foreground">{page.views} views</span>
                                                 </div>
-                                                {/* Removed Progress Bar as requested */}
                                             </div>
                                         ))}
                                         {(!analytics?.topPages || analytics.topPages.length === 0) && (
@@ -229,12 +340,25 @@ export function ProjectHubClient({ project, pages, analytics }: any) {
                                                             <DropdownMenuContent align="end">
                                                                 <Link href={`/dashboard/${project.slug}/editor?page=${page.slug}`}>
                                                                     <DropdownMenuItem>
-                                                                        <Edit3 className="mr-2 h-4 w-4" /> Edit
+                                                                        <Edit3 className="mr-2 h-4 w-4" /> Edit Content
                                                                     </DropdownMenuItem>
                                                                 </Link>
+                                                                <DropdownMenuItem onClick={() => openRenameModal(page)}>
+                                                                    <Pencil className="mr-2 h-4 w-4" /> Rename
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => openSlugModal(page)}>
+                                                                    <Link2 className="mr-2 h-4 w-4" /> Edit Slug
+                                                                </DropdownMenuItem>
                                                                 <DropdownMenuItem onClick={() => handlePublishToggle(page._id, page.status === "Published")}>
                                                                     <Eye className="mr-2 h-4 w-4" />
                                                                     {page.status === "Published" ? "Unpublish" : "Publish"}
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem 
+                                                                    onClick={() => openDeleteModal(page)}
+                                                                    className="text-red-500 focus:text-red-500"
+                                                                >
+                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
@@ -373,6 +497,104 @@ export function ProjectHubClient({ project, pages, analytics }: any) {
                     </motion.div>
                 </AnimatePresence>
             </div>
+
+            {/* Rename Modal */}
+            <Modal isOpen={renameModal.isOpen} onClose={() => setRenameModal({ isOpen: false, page: null })}>
+                <GlassCard className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-heading text-lg font-semibold">Rename Page</h3>
+                        <Button variant="ghost" size="icon" onClick={() => setRenameModal({ isOpen: false, page: null })}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Page Title</label>
+                            <Input
+                                value={newTitle}
+                                onChange={(e) => setNewTitle(e.target.value)}
+                                placeholder="Enter new title"
+                                onKeyDown={(e) => e.key === "Enter" && handleRename()}
+                            />
+                        </div>
+                        {modalError && <p className="text-sm text-red-500">{modalError}</p>}
+                        <div className="flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setRenameModal({ isOpen: false, page: null })}>
+                                Cancel
+                            </Button>
+                            <Button onClick={handleRename} disabled={isModalLoading}>
+                                {isModalLoading ? "Saving..." : "Save"}
+                            </Button>
+                        </div>
+                    </div>
+                </GlassCard>
+            </Modal>
+
+            {/* Delete Modal */}
+            <Modal isOpen={deleteModal.isOpen} onClose={() => setDeleteModal({ isOpen: false, page: null })}>
+                <GlassCard className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10">
+                            <AlertTriangle className="h-5 w-5 text-red-500" />
+                        </div>
+                        <h3 className="font-heading text-lg font-semibold">Delete Page</h3>
+                    </div>
+                    <p className="text-muted-foreground mb-4">
+                        Are you sure you want to delete <strong>&ldquo;{deleteModal.page?.title}&rdquo;</strong>? This action cannot be undone.
+                    </p>
+                    {modalError && <p className="text-sm text-red-500 mb-4">{modalError}</p>}
+                    <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setDeleteModal({ isOpen: false, page: null })}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete} disabled={isModalLoading}>
+                            {isModalLoading ? "Deleting..." : "Delete"}
+                        </Button>
+                    </div>
+                </GlassCard>
+            </Modal>
+
+            {/* Slug Edit Modal */}
+            <Modal isOpen={slugModal.isOpen} onClose={() => setSlugModal({ isOpen: false, page: null })}>
+                <GlassCard className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-heading text-lg font-semibold">Edit Page Slug</h3>
+                        <Button variant="ghost" size="icon" onClick={() => setSlugModal({ isOpen: false, page: null })}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-sm flex items-start gap-2">
+                            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                            <span>Changing the slug will break any existing links to this page.</span>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Page Slug</label>
+                            <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">/</span>
+                                <Input
+                                    value={newSlug}
+                                    onChange={(e) => setNewSlug(e.target.value.toLowerCase().replace(/ /g, "-"))}
+                                    placeholder="page-slug"
+                                    onKeyDown={(e) => e.key === "Enter" && handleSlugUpdate()}
+                                />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Only lowercase letters, numbers, and hyphens allowed.
+                            </p>
+                        </div>
+                        {modalError && <p className="text-sm text-red-500">{modalError}</p>}
+                        <div className="flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setSlugModal({ isOpen: false, page: null })}>
+                                Cancel
+                            </Button>
+                            <Button onClick={handleSlugUpdate} disabled={isModalLoading}>
+                                {isModalLoading ? "Saving..." : "Update Slug"}
+                            </Button>
+                        </div>
+                    </div>
+                </GlassCard>
+            </Modal>
         </div>
     );
 }

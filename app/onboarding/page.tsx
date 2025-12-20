@@ -8,7 +8,6 @@ export const dynamic = "force-dynamic";
 export default async function OnboardingPage() {
     // If user has already completed onboarding, redirect to dashboard
     const completed = await hasCompletedOnboarding();
-    console.log("[OnboardingPage Server] hasCompletedOnboarding:", completed);
     
     if (completed) {
         redirect("/dashboard");

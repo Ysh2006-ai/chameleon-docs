@@ -138,9 +138,9 @@ export function SettingsClient({ user }: SettingsClientProps) {
     // Appearance state - stored in localStorage
     const [accentColor, setAccentColor] = useState(() => {
         if (typeof window !== "undefined") {
-            return localStorage.getItem("chameleon-accent") || "indigo";
+            return localStorage.getItem("chameleon-accent") || "orange";
         }
-        return "indigo";
+        return "orange";
     });
 
     // Delete account state
