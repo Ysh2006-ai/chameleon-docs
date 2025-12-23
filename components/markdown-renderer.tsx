@@ -12,6 +12,30 @@ interface MarkdownRendererProps {
     className?: string;
 }
 
+// Helper to wrap words in spans for animation
+const WordWrapper = ({ children }: { children: React.ReactNode }) => {
+    if (typeof children === "string") {
+        return (
+            <>
+                {children.split(/(\s+)/).map((part, i) => {
+                    if (part.trim().length === 0) return part;
+                    return (
+                        <span key={i} className="chameleon-word inline-block origin-center" style={{ perspective: "1000px", transformStyle: "preserve-3d" }}>
+                            {part}
+                        </span>
+                    );
+                })}
+            </>
+        );
+    }
+    
+    if (Array.isArray(children)) {
+        return <>{children.map((child, i) => <WordWrapper key={i}>{child}</WordWrapper>)}</>;
+    }
+
+    return <>{children}</>;
+};
+
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
     return (
         <div className={cn("prose prose-invert max-w-none", className)}>
@@ -20,35 +44,53 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                 components={{
                     // 1. Headings
                     h1: ({ children }) => (
-                        <h1 className="mt-8 scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl text-foreground">{children}</h1>
+                        <h1 className="mt-8 scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl text-foreground">
+                            <WordWrapper>{children}</WordWrapper>
+                        </h1>
                     ),
                     h2: ({ children }) => (
-                        <h2 className="mt-10 scroll-m-20 border-b border-white/10 pb-2 text-3xl font-semibold tracking-tight first:mt-0 text-foreground">{children}</h2>
+                        <h2 className="mt-10 scroll-m-20 border-b border-white/10 pb-2 text-3xl font-semibold tracking-tight first:mt-0 text-foreground">
+                            <WordWrapper>{children}</WordWrapper>
+                        </h2>
                     ),
                     h3: ({ children }) => (
-                        <h3 className="mt-8 scroll-m-20 text-2xl font-semibold tracking-tight text-foreground">{children}</h3>
+                        <h3 className="mt-8 scroll-m-20 text-2xl font-semibold tracking-tight text-foreground">
+                            <WordWrapper>{children}</WordWrapper>
+                        </h3>
                     ),
                     h4: ({ children }) => (
-                        <h4 className="mt-6 scroll-m-20 text-xl font-semibold tracking-tight text-foreground">{children}</h4>
+                        <h4 className="mt-6 scroll-m-20 text-xl font-semibold tracking-tight text-foreground">
+                            <WordWrapper>{children}</WordWrapper>
+                        </h4>
                     ),
 
                     // 2. Paragraphs & Text
                     p: ({ children }) => (
-                        <p className="leading-7 [&:not(:first-child)]:mt-6 text-muted-foreground text-lg">{children}</p>
+                        <p className="leading-7 [&:not(:first-child)]:mt-6 text-muted-foreground text-lg">
+                            <WordWrapper>{children}</WordWrapper>
+                        </p>
                     ),
                     a: ({ href, children }) => (
-                        <a href={href} className="font-medium text-accent underline underline-offset-4 hover:text-accent/80 transition-colors">{children}</a>
+                        <a href={href} className="font-medium text-accent underline underline-offset-4 hover:text-accent/80 transition-colors">
+                            <WordWrapper>{children}</WordWrapper>
+                        </a>
                     ),
                     strong: ({ children }) => (
-                        <strong className="font-bold text-foreground">{children}</strong>
+                        <strong className="font-bold text-foreground">
+                            <WordWrapper>{children}</WordWrapper>
+                        </strong>
                     ),
                     em: ({ children }) => (
-                        <em className="italic">{children}</em>
+                        <em className="italic">
+                            <WordWrapper>{children}</WordWrapper>
+                        </em>
                     ),
 
                     // 3. Blockquotes (Glass Style)
                     blockquote: ({ children }) => (
-                        <blockquote className="mt-6 border-l-2 border-accent pl-6 italic text-muted-foreground bg-white/5 py-2 pr-4 rounded-r-lg">{children}</blockquote>
+                        <blockquote className="mt-6 border-l-2 border-accent pl-6 italic text-muted-foreground bg-white/5 py-2 pr-4 rounded-r-lg">
+                            <WordWrapper>{children}</WordWrapper>
+                        </blockquote>
                     ),
 
                     // 4. Lists
@@ -59,7 +101,9 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                         <ol className="my-6 ml-6 list-decimal [&>li]:mt-2 text-muted-foreground">{children}</ol>
                     ),
                     li: ({ children }) => (
-                        <li className="text-muted-foreground">{children}</li>
+                        <li className="text-muted-foreground">
+                            <WordWrapper>{children}</WordWrapper>
+                        </li>
                     ),
 
                     // 5. Code - both inline and blocks
@@ -95,7 +139,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                         // Inline code
                         return (
                             <code className="relative rounded-md bg-muted px-[0.4rem] py-[0.2rem] font-mono text-sm font-medium text-accent" {...props}>
-                                {children}
+                                <WordWrapper>{children}</WordWrapper>
                             </code>
                         );
                     },
@@ -140,10 +184,14 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                         </div>
                     ),
                     th: ({ children }) => (
-                        <th className="border border-white/10 px-4 py-2 text-left font-semibold text-foreground bg-white/5">{children}</th>
+                        <th className="border border-white/10 px-4 py-2 text-left font-semibold text-foreground bg-white/5">
+                            <WordWrapper>{children}</WordWrapper>
+                        </th>
                     ),
                     td: ({ children }) => (
-                        <td className="border border-white/10 px-4 py-2 text-muted-foreground">{children}</td>
+                        <td className="border border-white/10 px-4 py-2 text-muted-foreground">
+                            <WordWrapper>{children}</WordWrapper>
+                        </td>
                     ),
                 }}
             >

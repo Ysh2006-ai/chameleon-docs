@@ -22,7 +22,7 @@ interface WordData {
 }
 
 // Helper to split text into words while preserving structure
-function splitIntoWords(text: string): WordData[] {
+export function splitIntoWords(text: string): WordData[] {
     const words: WordData[] = [];
     // Split by whitespace but preserve the structure
     const parts = text.split(/(\s+)/);
@@ -83,7 +83,7 @@ const wordVariants = {
 };
 
 // Container variants for stagger effect
-const containerVariants = {
+export const containerVariants = {
     vibrate: {
         transition: {
             staggerChildren: 0.002,
@@ -104,7 +104,7 @@ const containerVariants = {
 };
 
 // Single Word Component
-function AnimatedWord({ 
+export function AnimatedWord({ 
     word, 
     index, 
     phase,

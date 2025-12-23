@@ -11,6 +11,25 @@ import { updatePageContent, publishPage, updatePageSection } from "@/actions/pag
 import { cn, getTextareaCaretCoordinates } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    DragStartEvent,
+    DragOverlay,
+} from "@dnd-kit/core";
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { updateSectionOrder } from "@/actions/project-actions";
+import { SortableSection } from "@/components/editor/sortable-section";
 
 // Custom smooth scroll hook for nested containers
 function useSmoothScroll(ref: React.RefObject<HTMLElement>) {
@@ -128,9 +147,10 @@ interface EditorClientProps {
         section?: string;
         isPublished: boolean;
     };
+    sectionOrder: string[];
 }
 
-export function EditorClient({ projectSlug, pages, activePage }: EditorClientProps) {
+export function EditorClient({ projectSlug, pages, activePage, sectionOrder: initialSectionOrder }: EditorClientProps) {
     const [content, setContent] = useState(activePage.content);
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(false);
@@ -147,19 +167,28 @@ export function EditorClient({ projectSlug, pages, activePage }: EditorClientPro
 
     // Sidebar State
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+    const [isDragging, setIsDragging] = useState(false);
+    const [activeId, setActiveId] = useState<string | null>(null);
+    const [orderedSections, setOrderedSections] = useState<string[]>(initialSectionOrder);
+
+    // DnD sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
 
     const router = useRouter();
     const editorRef = useRef<HTMLTextAreaElement>(null);
     const editorContainerRef = useRef<HTMLDivElement>(null);
     const sidebarContainerRef = useRef<HTMLDivElement>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const dragCollapseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // History for undo/redo
     const { pushHistory, undo, redo, reset: resetHistory } = useHistory(activePage.content);
 
     // Apply smooth scroll to both containers
     useSmoothScroll(editorContainerRef as React.RefObject<HTMLElement>);
-    useSmoothScroll(sidebarContainerRef as React.RefObject<HTMLElement>);
     useSmoothScroll(sidebarContainerRef as React.RefObject<HTMLElement>);
 
     // Reset state when switching pages
@@ -181,11 +210,18 @@ export function EditorClient({ projectSlug, pages, activePage }: EditorClientPro
         }, {});
     }, [pages]);
 
+    const availableSections = useMemo(() => Object.keys(groupedPages), [groupedPages]);
+
     const sections = useMemo(() => {
-        return Object.keys(groupedPages).sort((a, b) =>
-            a === "Uncategorized" ? -1 : b === "Uncategorized" ? 1 : a.localeCompare(b)
-        );
-    }, [groupedPages]);
+        const ordered = orderedSections.filter(s => availableSections.includes(s));
+        const newSections = availableSections.filter(s => !ordered.includes(s) && s !== "Uncategorized");
+        const result = ["Uncategorized", ...ordered, ...newSections.sort()].filter(s => availableSections.includes(s));
+        return result;
+    }, [orderedSections, availableSections]);
+
+    useEffect(() => {
+        setOrderedSections(initialSectionOrder);
+    }, [initialSectionOrder]);
 
     useEffect(() => {
         const initialExpanded: Record<string, boolean> = {};
@@ -194,8 +230,51 @@ export function EditorClient({ projectSlug, pages, activePage }: EditorClientPro
     }, [sections]);
 
     const toggleSection = useCallback((sec: string) => {
+        if (isDragging) return;
         setExpandedSections(prev => ({ ...prev, [sec]: !prev[sec] }));
-    }, []);
+    }, [isDragging]);
+
+    // Drag handlers
+    const handleDragStart = useCallback((event: DragStartEvent) => {
+        setIsDragging(true);
+        setActiveId(event.active.id as string);
+        // Clear any existing timeout
+        if (dragCollapseTimeoutRef.current) {
+            clearTimeout(dragCollapseTimeoutRef.current);
+        }
+        // Collapse sections after 2 seconds of holding
+        dragCollapseTimeoutRef.current = setTimeout(() => {
+            const allCollapsed: Record<string, boolean> = {};
+            sections.forEach(s => allCollapsed[s] = false);
+            setExpandedSections(allCollapsed);
+        }, 2000);
+    }, [sections]);
+
+    const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+        setIsDragging(false);
+        setActiveId(null);
+        // Clear the collapse timeout if drag ends before 2 seconds
+        if (dragCollapseTimeoutRef.current) {
+            clearTimeout(dragCollapseTimeoutRef.current);
+            dragCollapseTimeoutRef.current = null;
+        }
+        const allExpanded: Record<string, boolean> = {};
+        sections.forEach(s => allExpanded[s] = true);
+        setExpandedSections(allExpanded);
+
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = sections.indexOf(active.id as string);
+        const newIndex = sections.indexOf(over.id as string);
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+            const newOrder = arrayMove(sections, oldIndex, newIndex);
+            const orderToSave = newOrder.filter(s => s !== "Uncategorized");
+            setOrderedSections(orderToSave);
+            await updateSectionOrder(projectSlug, orderToSave);
+        }
+    }, [sections, projectSlug]);
 
     // --- SAVE FUNCTION ---
     const handleSave = useCallback(async () => {
@@ -635,27 +714,42 @@ export function EditorClient({ projectSlug, pages, activePage }: EditorClientPro
                             className="h-full overflow-y-auto p-4 editor-scroll-area" 
                             data-lenis-prevent
                         >
-                            <nav className="space-y-4">
-                                {sections.map(sec => (
-                                    <div key={sec}>
-                                        {sec !== "Uncategorized" && (
-                                            <button onClick={() => toggleSection(sec)} className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 w-full text-left hover:text-foreground transition-colors">
-                                                {expandedSections[sec] ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                                                {sec}
-                                            </button>
-                                        )}
-                                        {(sec === "Uncategorized" || expandedSections[sec]) && (
-                                            <div className="space-y-1 pl-2 border-l border-white/10 ml-1">
-                                                {groupedPages[sec].map((page: any) => (
-                                                    <div key={page._id} onClick={() => router.push(`?page=${page.slug}`)} className={cn("cursor-pointer rounded-r-md px-3 py-1.5 text-sm truncate transition-colors", page.slug === activePage.slug ? "bg-primary/10 text-primary font-medium border-l-2 border-primary -ml-[1px]" : "text-muted-foreground hover:text-foreground hover:bg-white/5")}>
-                                                        {page.title}
-                                                    </div>
-                                                ))}
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragStart={handleDragStart}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <nav className="space-y-4">
+                                    <SortableContext items={sections} strategy={verticalListSortingStrategy}>
+                                        {sections.map(sec => (
+                                            <SortableSection
+                                                key={sec}
+                                                id={sec}
+                                                isExpanded={expandedSections[sec] ?? true}
+                                                isDragging={isDragging}
+                                                onToggle={() => toggleSection(sec)}
+                                            >
+                                                <div className="space-y-1 pl-2 border-l border-white/10 ml-1">
+                                                    {groupedPages[sec]?.map((page: any) => (
+                                                        <div key={page._id} onClick={() => router.push(`?page=${page.slug}`)} className={cn("cursor-pointer rounded-r-md px-3 py-1.5 text-sm truncate transition-colors", page.slug === activePage.slug ? "bg-primary/10 text-primary font-medium border-l-2 border-primary -ml-[1px]" : "text-muted-foreground hover:text-foreground hover:bg-white/5")}>
+                                                            {page.title}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </SortableSection>
+                                        ))}
+                                    </SortableContext>
+                                    </nav>
+                                    <DragOverlay>
+                                        {activeId ? (
+                                            <div className="flex items-center gap-2 bg-card/90 backdrop-blur-sm border border-primary/30 rounded-md px-3 py-2 shadow-lg">
+                                                <GripVertical className="h-3 w-3 text-primary" />
+                                                <span className="text-xs font-bold uppercase tracking-wider text-foreground">{activeId}</span>
                                             </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </nav>
+                                        ) : null}
+                                    </DragOverlay>
+                            </DndContext>
                         </div>
                     </Panel>
 

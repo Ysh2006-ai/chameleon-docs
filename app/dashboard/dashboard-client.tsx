@@ -43,7 +43,7 @@ export function DashboardClient({ initialProjects }: { initialProjects: ProjectD
                 <div className="flex items-center gap-4">
                     <div className="relative hidden md:block w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Search projects..." className="pl-10 bg-white/5 border-white/10" />
+                        <Input placeholder="Search projects..." className="pl-10 bg-card/50 border-border" />
                     </div>
                     <Link href="/dashboard/new">
                         <MagneticButton size="md" className="gap-2">
@@ -61,7 +61,7 @@ export function DashboardClient({ initialProjects }: { initialProjects: ProjectD
                 </div>
 
                 {initialProjects.length === 0 ? (
-                    <GlassCard className="flex flex-col items-center justify-center py-24 text-center border-dashed border-white/10 bg-white/5">
+                    <GlassCard className="flex flex-col items-center justify-center py-24 text-center border-dashed border-border bg-card/20">
 
                         <h3 className="text-xl font-bold mb-2">No projects yet</h3>
                         <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
@@ -81,7 +81,7 @@ export function DashboardClient({ initialProjects }: { initialProjects: ProjectD
                         {initialProjects.map((project) => (
                             <motion.div key={project._id} variants={itemVariants}>
                                 <Link href={`/dashboard/${project.slug}`}>
-                                    <GlassCard className="group relative h-full cursor-pointer transition-all hover:border-accent/50 hover:bg-white/10 p-6">
+                                    <GlassCard className="group relative h-full cursor-pointer transition-all hover:border-accent/50 p-6">
                                         <div className="mb-6 flex items-start justify-between">
                                             <div
                                                 className="h-12 w-12 rounded-xl border border-white/10 shadow-inner flex items-center justify-center text-xl"

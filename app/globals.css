@@ -4,10 +4,10 @@
 
 @layer base {
   :root {
-    /* Premium Editorial: Warm Alabaster & Charcoal */
-    --background: 43 18% 94%;
-    /* #F4F2ED */
-    --foreground: 0 0% 11%;
+    /* Premium Editorial: Creamy Beige & Charcoal */
+    --background: 36 30% 90%;
+    /* #EBE3D6 - Creamy Beige */
+    --foreground: 0 0% 20%;
     /* #1C1C1C */
 
     --card: 0 0% 100%;
@@ -19,13 +19,13 @@
 
     --primary: 0 0% 11%;
     /* #1C1C1C */
-    --primary-foreground: 43 18% 94%;
+    --primary-foreground: 36 30% 90%;
 
-    --secondary: 45 12% 90%;
-    /* #EAE8E2 */
+    --secondary: 36 20% 85%;
+    /* #DCD6CC */
     --secondary-foreground: 0 0% 11%;
 
-    --muted: 45 12% 90%;
+    --muted: 36 20% 85%;
     --muted-foreground: 0 0% 40%;
 
     --accent: 10 54% 53%;
@@ -273,4 +273,10 @@ html.lenis body {
 /* Code blocks should fade, not flip */
 .code-block-wrapper {
   transition: opacity 0.3s ease;
+}
+
+/* Wave fade animation for reimagination - Framer Motion handles the animation */
+.wave-content {
+  will-change: mask-image, -webkit-mask-image, opacity;
+  transform: translateZ(0);
 }

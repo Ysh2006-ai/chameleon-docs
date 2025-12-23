@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getProjectPages, getPageContent } from "@/actions/page-actions";
+import { getProjectDetails } from "@/actions/project-actions";
 import { EditorClient } from "./editor-client";
 
 export default async function EditorPage({
@@ -9,7 +10,10 @@ export default async function EditorPage({
     params: { projectSlug: string },
     searchParams: { page?: string }
 }) {
-    const pages = await getProjectPages(params.projectSlug);
+    const [pages, project] = await Promise.all([
+        getProjectPages(params.projectSlug),
+        getProjectDetails(params.projectSlug)
+    ]);
 
     // Default to first page if no param provided
     const targetPageSlug = searchParams.page || pages[0]?.slug;
@@ -31,6 +35,7 @@ export default async function EditorPage({
             projectSlug={params.projectSlug}
             pages={pages}
             activePage={pageContent}
+            sectionOrder={project?.sectionOrder || []}
         />
     );
 }

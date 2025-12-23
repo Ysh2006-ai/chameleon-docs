@@ -80,7 +80,7 @@ export default function LandingPageClient({ session }: { session: any }) {
 
                     {/* Massive Typography */}
                     <div className="relative -mt-4 z-20 flex flex-col items-center text-center">
-                        <h1 className="font-heading text-[13vw] leading-[0.85] tracking-tighter text-white mix-blend-difference">
+                        <h1 className="font-heading text-[13vw] leading-[0.85] tracking-tighter text-foreground">
                             <motion.span
                                 initial={{ y: "100%" }}
                                 animate={{ y: 0 }}

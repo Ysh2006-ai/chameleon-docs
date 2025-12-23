@@ -127,6 +127,31 @@ export async function updateProjectSettings(
     }
 }
 
+// 4.5 Update Section Order
+export async function updateSectionOrder(projectSlug: string, sectionOrder: string[]) {
+    try {
+        const session = await auth();
+        if (!session?.user?.email) return { error: "Unauthorized" };
+
+        await connectToDB();
+
+        const project = await Project.findOne({ slug: projectSlug, ownerEmail: session.user.email });
+        if (!project) return { error: "Project not found" };
+
+        project.sectionOrder = sectionOrder;
+        await project.save();
+
+        revalidatePath(`/dashboard/${projectSlug}`);
+        revalidatePath(`/dashboard/${projectSlug}/editor`);
+        revalidatePath(`/p/${projectSlug}`);
+
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to update section order" };
+    }
+}
+
 // 5. Delete a Project
 export async function deleteProject(slug: string) {
     try {

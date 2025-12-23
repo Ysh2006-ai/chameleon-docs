@@ -11,6 +11,7 @@ export interface IProject extends Document {
         color: string;
         font: string;
     };
+    sectionOrder?: string[]; // Array of section names in order
     createdAt: Date;
     updatedAt: Date;
 }
@@ -33,6 +34,7 @@ const ProjectSchema = new Schema<IProject>(
             color: { type: String, default: "#6366f1" },
             font: { type: String, default: "Inter" },
         },
+        sectionOrder: { type: [String], default: [] },
     },
     { timestamps: true }
 );

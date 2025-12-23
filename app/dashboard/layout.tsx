@@ -21,7 +21,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             {/* Floating Sidebar */}
-            <aside className="fixed left-4 top-4 bottom-4 w-64 hidden lg:flex flex-col rounded-2xl border border-white/5 bg-white/5 backdrop-blur-2xl p-4 shadow-2xl z-50">
+            <aside className="fixed left-4 top-4 bottom-4 w-64 hidden lg:flex flex-col rounded-2xl border border-border bg-card/50 backdrop-blur-xl p-4 shadow-sm z-50">
                 <div className="mb-8 px-4 py-2">
                     <Link href="/" className="flex items-center gap-2">
                         <ChameleonLogo size={32} />

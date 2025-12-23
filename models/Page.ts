@@ -30,12 +30,6 @@ const PageSchema = new Schema<IPage>(
 // Compound index to ensure slugs are unique PER project
 PageSchema.index({ projectId: 1, slug: 1 }, { unique: true });
 
-// Index for faster project page lookups with ordering
-PageSchema.index({ projectId: 1, order: 1, createdAt: 1 });
-
-// Index for published pages filtering
-PageSchema.index({ projectId: 1, isPublished: 1 });
-
 const Page: Model<IPage> =
     mongoose.models.Page || mongoose.model<IPage>("Page", PageSchema);
 
