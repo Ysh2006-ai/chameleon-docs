@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Settings, FileText, Plus, Edit3, ArrowUpRight,
     Palette, Check, Globe, Lock, MoreVertical, Folder, Eye,
-    Pencil, Trash2, Link2, X, AlertTriangle
+    Pencil, Trash2, Link2, X, AlertTriangle, Download, Upload
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { GlassTabs } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { updateProjectSettings } from "@/actions/project-actions";
+import { updateProjectSettings, deleteProject, renameProjectSlug, exportProject, importProject } from "@/actions/project-actions";
 import { createPage, publishPage, deletePage, updatePageTitle, updatePageSlug } from "@/actions/page-actions";
 import { cn } from "@/lib/utils";
 import {
@@ -90,7 +90,7 @@ export function ProjectHubClient({ project, pages, analytics }: any) {
     const [emoji, setEmoji] = useState(project.emoji || "📚");
     const [isSavingSettings, setIsSavingSettings] = useState(false);
 
-    // Modal states
+    // Page Modal states
     const [renameModal, setRenameModal] = useState<{ isOpen: boolean; page: any }>({ isOpen: false, page: null });
     const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; page: any }>({ isOpen: false, page: null });
     const [slugModal, setSlugModal] = useState<{ isOpen: boolean; page: any }>({ isOpen: false, page: null });
@@ -100,6 +100,14 @@ export function ProjectHubClient({ project, pages, analytics }: any) {
     const [newSlug, setNewSlug] = useState("");
     const [modalError, setModalError] = useState("");
     const [isModalLoading, setIsModalLoading] = useState(false);
+
+    // Project management states
+    const [projectSlugModal, setProjectSlugModal] = useState(false);
+    const [projectDeleteModal, setProjectDeleteModal] = useState(false);
+    const [newProjectSlug, setNewProjectSlug] = useState(project.slug);
+    const [deleteConfirmName, setDeleteConfirmName] = useState("");
+    const [isExporting, setIsExporting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Emoji options - define outside component to avoid re-creation
     const EMOJI_OPTIONS = ["📚", "📖", "📝", "✨", "🚀", "💡", "🎯", "⚡", "🔥", "💎", "🌟", "📋", "📁", "🎨", "🔧", "📊", "🌐", "💻", "📱", ""];
@@ -199,6 +207,93 @@ export function ProjectHubClient({ project, pages, analytics }: any) {
             setModalError(res.error || "Failed to update slug");
         }
         setIsModalLoading(false);
+    };
+
+    // Project Slug Rename Handler
+    const handleProjectSlugRename = async () => {
+        if (!newProjectSlug.trim()) {
+            setModalError("Slug cannot be empty");
+            return;
+        }
+        setIsModalLoading(true);
+        setModalError("");
+        
+        const res = await renameProjectSlug(project.slug, newProjectSlug);
+        
+        if (res.success) {
+            setProjectSlugModal(false);
+            router.push(`/dashboard/${res.newSlug}`);
+        } else {
+            setModalError(res.error || "Failed to rename project slug");
+        }
+        setIsModalLoading(false);
+    };
+
+    // Project Delete Handler
+    const handleProjectDelete = async () => {
+        if (deleteConfirmName !== project.name) {
+            setModalError("Please type the project name to confirm");
+            return;
+        }
+        setIsModalLoading(true);
+        setModalError("");
+        
+        const res = await deleteProject(project.slug);
+        
+        if (res.success) {
+            setProjectDeleteModal(false);
+            router.push("/dashboard");
+        } else {
+            setModalError(res.error || "Failed to delete project");
+        }
+        setIsModalLoading(false);
+    };
+
+    // Export Handler
+    const handleExport = async () => {
+        setIsExporting(true);
+        
+        const res = await exportProject(project.slug);
+        
+        if (res.success && res.data) {
+            const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${project.slug}-backup.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        setIsExporting(false);
+    };
+
+    // Import Handler
+    const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            
+            const res = await importProject(data);
+            
+            if (res.success) {
+                router.push(`/dashboard/${res.slug}`);
+            } else {
+                alert(res.error || "Failed to import project");
+            }
+        } catch (error) {
+            alert("Invalid JSON file");
+        }
+        
+        // Reset file input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
     };
 
     // Group pages by section
@@ -492,13 +587,70 @@ export function ProjectHubClient({ project, pages, analytics }: any) {
                                         </Button>
                                     </div>
                                 </GlassCard>
+
+                                {/* Project Management Section */}
+                                <GlassCard className="p-6">
+                                    <div className="mb-6 flex items-center gap-2 border-b border-white/10 pb-4">
+                                        <Settings className="h-5 w-5 text-primary" />
+                                        <h3 className="font-heading text-lg font-semibold">Project Management</h3>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        {/* Project Slug */}
+                                        <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10">
+                                            <div>
+                                                <h4 className="font-medium">Project Slug</h4>
+                                                <p className="text-sm text-muted-foreground">Current: /{project.slug}</p>
+                                            </div>
+                                            <Button variant="outline" size="sm" onClick={() => { setNewProjectSlug(project.slug); setModalError(""); setProjectSlugModal(true); }}>
+                                                <Link2 className="mr-2 h-4 w-4" /> Rename Slug
+                                            </Button>
+                                        </div>
+
+                                        {/* Export/Import */}
+                                        <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10">
+                                            <div>
+                                                <h4 className="font-medium">Backup & Restore</h4>
+                                                <p className="text-sm text-muted-foreground">Export or import your documentation</p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button variant="outline" size="sm" onClick={handleExport} disabled={isExporting}>
+                                                    <Download className="mr-2 h-4 w-4" /> {isExporting ? "Exporting..." : "Export"}
+                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                                    <Upload className="mr-2 h-4 w-4" /> Import
+                                                </Button>
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    accept=".json"
+                                                    className="hidden"
+                                                    onChange={handleImport}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Danger Zone */}
+                                        <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/20">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h4 className="font-medium text-red-500">Danger Zone</h4>
+                                                    <p className="text-sm text-muted-foreground">Permanently delete this project and all its pages</p>
+                                                </div>
+                                                <Button variant="destructive" size="sm" onClick={() => { setDeleteConfirmName(""); setModalError(""); setProjectDeleteModal(true); }}>
+                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Project
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </GlassCard>
                             </div>
                         )}
                     </motion.div>
                 </AnimatePresence>
             </div>
 
-            {/* Rename Modal */}
+            {/* Page Rename Modal */}
             <Modal isOpen={renameModal.isOpen} onClose={() => setRenameModal({ isOpen: false, page: null })}>
                 <GlassCard className="p-6">
                     <div className="flex items-center justify-between mb-4">
@@ -530,7 +682,7 @@ export function ProjectHubClient({ project, pages, analytics }: any) {
                 </GlassCard>
             </Modal>
 
-            {/* Delete Modal */}
+            {/* Page Delete Modal */}
             <Modal isOpen={deleteModal.isOpen} onClose={() => setDeleteModal({ isOpen: false, page: null })}>
                 <GlassCard className="p-6">
                     <div className="flex items-center gap-3 mb-4">
@@ -554,7 +706,7 @@ export function ProjectHubClient({ project, pages, analytics }: any) {
                 </GlassCard>
             </Modal>
 
-            {/* Slug Edit Modal */}
+            {/* Page Slug Edit Modal */}
             <Modal isOpen={slugModal.isOpen} onClose={() => setSlugModal({ isOpen: false, page: null })}>
                 <GlassCard className="p-6">
                     <div className="flex items-center justify-between mb-4">
@@ -590,6 +742,86 @@ export function ProjectHubClient({ project, pages, analytics }: any) {
                             </Button>
                             <Button onClick={handleSlugUpdate} disabled={isModalLoading}>
                                 {isModalLoading ? "Saving..." : "Update Slug"}
+                            </Button>
+                        </div>
+                    </div>
+                </GlassCard>
+            </Modal>
+
+            {/* Project Slug Rename Modal */}
+            <Modal isOpen={projectSlugModal} onClose={() => setProjectSlugModal(false)}>
+                <GlassCard className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-heading text-lg font-semibold">Rename Project Slug</h3>
+                        <Button variant="ghost" size="icon" onClick={() => setProjectSlugModal(false)}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-sm flex items-start gap-2">
+                            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                            <span>Changing the project slug will break any existing links to this documentation.</span>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Project Slug</label>
+                            <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">/p/</span>
+                                <Input
+                                    value={newProjectSlug}
+                                    onChange={(e) => setNewProjectSlug(e.target.value.toLowerCase().replace(/ /g, "-"))}
+                                    placeholder="project-slug"
+                                    onKeyDown={(e) => e.key === "Enter" && handleProjectSlugRename()}
+                                />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Only lowercase letters, numbers, and hyphens allowed.
+                            </p>
+                        </div>
+                        {modalError && <p className="text-sm text-red-500">{modalError}</p>}
+                        <div className="flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setProjectSlugModal(false)}>
+                                Cancel
+                            </Button>
+                            <Button onClick={handleProjectSlugRename} disabled={isModalLoading}>
+                                {isModalLoading ? "Renaming..." : "Rename Slug"}
+                            </Button>
+                        </div>
+                    </div>
+                </GlassCard>
+            </Modal>
+
+            {/* Project Delete Modal */}
+            <Modal isOpen={projectDeleteModal} onClose={() => setProjectDeleteModal(false)}>
+                <GlassCard className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10">
+                            <AlertTriangle className="h-5 w-5 text-red-500" />
+                        </div>
+                        <h3 className="font-heading text-lg font-semibold">Delete Project</h3>
+                    </div>
+                    <p className="text-muted-foreground mb-4">
+                        This will permanently delete <strong>&ldquo;{project.name}&rdquo;</strong> and all its pages. This action cannot be undone.
+                    </p>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Type <strong>{project.name}</strong> to confirm</label>
+                            <Input
+                                value={deleteConfirmName}
+                                onChange={(e) => setDeleteConfirmName(e.target.value)}
+                                placeholder="Enter project name"
+                            />
+                        </div>
+                        {modalError && <p className="text-sm text-red-500">{modalError}</p>}
+                        <div className="flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setProjectDeleteModal(false)}>
+                                Cancel
+                            </Button>
+                            <Button 
+                                variant="destructive" 
+                                onClick={handleProjectDelete} 
+                                disabled={isModalLoading || deleteConfirmName !== project.name}
+                            >
+                                {isModalLoading ? "Deleting..." : "Delete Project"}
                             </Button>
                         </div>
                     </div>

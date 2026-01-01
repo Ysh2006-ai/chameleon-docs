@@ -332,3 +332,160 @@ export async function createProjectFromTemplate(formData: FormData) {
         return { success: false, error: "Failed to create project from template" };
     }
 }
+
+// 7. Rename Project Slug
+export async function renameProjectSlug(currentSlug: string, newSlug: string) {
+    try {
+        const session = await auth();
+        if (!session?.user?.email) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        // Validate new slug format
+        const sanitizedSlug = newSlug.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
+        if (!sanitizedSlug || sanitizedSlug.length < 2) {
+            return { success: false, error: "Slug must be at least 2 characters" };
+        }
+        if (sanitizedSlug !== newSlug) {
+            return { success: false, error: "Slug can only contain lowercase letters, numbers, and hyphens" };
+        }
+
+        await connectToDB();
+
+        // Check if the project belongs to the user
+        const project = await Project.findOne({ slug: currentSlug, ownerEmail: session.user.email });
+        if (!project) {
+            return { success: false, error: "Project not found" };
+        }
+
+        // Check if new slug already exists
+        if (currentSlug !== sanitizedSlug) {
+            const existing = await Project.findOne({ slug: sanitizedSlug });
+            if (existing) {
+                return { success: false, error: "A project with this slug already exists" };
+            }
+        }
+
+        // Update the slug
+        project.slug = sanitizedSlug;
+        await project.save();
+
+        revalidatePath("/dashboard");
+        revalidatePath(`/dashboard/${sanitizedSlug}`);
+        revalidatePath(`/p/${sanitizedSlug}`);
+
+        return { success: true, newSlug: sanitizedSlug };
+    } catch (error) {
+        console.error(error);
+        return { success: false, error: "Failed to rename project slug" };
+    }
+}
+
+// 8. Export Project (returns project data + all pages as JSON)
+export async function exportProject(slug: string) {
+    try {
+        const session = await auth();
+        if (!session?.user?.email) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        await connectToDB();
+
+        const project = await Project.findOne({ slug, ownerEmail: session.user.email }).lean();
+        if (!project) {
+            return { success: false, error: "Project not found" };
+        }
+
+        const pages = await Page.find({ projectId: project._id })
+            .sort({ order: 1 })
+            .lean();
+
+        // Build export object
+        const exportData = {
+            version: "1.0",
+            exportedAt: new Date().toISOString(),
+            project: {
+                name: project.name,
+                slug: project.slug,
+                description: project.description || "",
+                emoji: project.emoji || "",
+                isPublic: project.isPublic,
+                theme: project.theme,
+                sectionOrder: project.sectionOrder || [],
+            },
+            pages: pages.map((page: any) => ({
+                title: page.title,
+                slug: page.slug,
+                content: page.content,
+                section: page.section || "",
+                isPublished: page.isPublished,
+                order: page.order,
+            })),
+        };
+
+        return { success: true, data: exportData };
+    } catch (error) {
+        console.error(error);
+        return { success: false, error: "Failed to export project" };
+    }
+}
+
+// 9. Import Project (creates new project from exported JSON)
+export async function importProject(importData: any) {
+    try {
+        const session = await auth();
+        if (!session?.user?.email) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        // Validate import data structure
+        if (!importData?.project?.name || !Array.isArray(importData?.pages)) {
+            return { success: false, error: "Invalid import file format" };
+        }
+
+        await connectToDB();
+
+        // Generate a unique slug
+        let baseSlug = importData.project.slug || importData.project.name.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
+        let slug = baseSlug;
+        let counter = 1;
+        
+        while (await Project.findOne({ slug })) {
+            slug = `${baseSlug}-${counter}`;
+            counter++;
+        }
+
+        // Create the project
+        const newProject = await Project.create({
+            name: importData.project.name,
+            slug,
+            description: importData.project.description || "",
+            ownerEmail: session.user.email,
+            emoji: importData.project.emoji || "",
+            isPublic: importData.project.isPublic || false,
+            theme: importData.project.theme || { color: "#6366f1", font: "Inter" },
+            sectionOrder: importData.project.sectionOrder || [],
+        });
+
+        // Create all pages
+        for (let i = 0; i < importData.pages.length; i++) {
+            const pageData = importData.pages[i];
+            await Page.create({
+                projectId: newProject._id,
+                title: pageData.title,
+                slug: pageData.slug,
+                content: pageData.content || "",
+                section: pageData.section || "",
+                isPublished: pageData.isPublished ?? true,
+                order: pageData.order ?? i,
+            });
+        }
+
+        revalidatePath("/dashboard");
+
+        return { success: true, slug: newProject.slug };
+    } catch (error) {
+        console.error(error);
+        return { success: false, error: "Failed to import project" };
+    }
+}

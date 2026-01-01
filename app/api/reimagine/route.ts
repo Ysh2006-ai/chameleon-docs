@@ -1,3 +1,8 @@
+/**
+ * @deprecated This API route is deprecated. AI reimagination now uses PuterJS client-side.
+ * Kept for backwards compatibility. All new code should use the usePuterAI hook.
+ * @see hooks/use-puter-ai.ts
+ */
 import { google } from "@ai-sdk/google";
 import { streamText } from "ai";
 

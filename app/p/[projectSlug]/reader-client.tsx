@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ChevronRight, Home, LayoutDashboard, Wand2, RefreshCw, RotateCcw, Sparkles, ChevronDown, Check } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { usePuterAI } from "@/hooks/use-puter-ai";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -148,6 +149,9 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
         }
     };
 
+    // PuterJS AI hook for reimagination
+    const { reimagine: puterReimagine } = usePuterAI();
+
     const handleReimagine = async (mode: string = reimagineMode) => {
         if (isReimagining) return;
         
@@ -157,28 +161,8 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
         setWavePhase("fade-out"); // Start fade out
 
         try {
-            const response = await fetch("/api/reimagine", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    content: activePage.content,
-                    simplificationLevel: mode,
-                }),
-            });
-
-            if (!response.ok) throw new Error("Failed to reimagine");
-            
-            const reader = response.body?.getReader();
-            let newContent = "";
-            
-            if (reader) {
-                const decoder = new TextDecoder();
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    newContent += decoder.decode(value);
-                }
-            }
+            // Use PuterJS for AI reimagination (client-side)
+            const newContent = await puterReimagine(activePage.content, mode);
 
             // Store content and swap - content is hidden because we're in "loading" phase
             setStoredReimaginedContent(newContent);
@@ -189,7 +173,7 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
             setWavePhase("fade-in");
 
         } catch (error) {
-            console.error(error);
+            console.error("PuterJS AI Error:", error);
             setWavePhase("idle");
             setIsReimagining(false);
             setShowLoader(false);
@@ -334,7 +318,7 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
             {/* Main Content */}
             <main className="flex-1 lg:pl-72">
                 {/* Header with Reimagine Controls */}
-                <header className="sticky top-0 z-30 flex h-16 items-center justify-between">
+                <header className="sticky top-0 z-30 flex h-16 items-center justify-between px-4 lg:px-6">
                     <div className="flex items-center gap-4">
                         <Button 
                             variant="ghost" 
