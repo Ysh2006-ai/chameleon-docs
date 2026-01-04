@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import MagneticButton from "@/components/ui/magnetic-button";
 
 interface ProjectData {
     _id: string;
@@ -46,9 +45,9 @@ export function DashboardClient({ initialProjects }: { initialProjects: ProjectD
                         <Input placeholder="Search projects..." className="pl-10 bg-card/50 border-border" />
                     </div>
                     <Link href="/dashboard/new">
-                        <MagneticButton size="md" className="gap-2">
+                        <Button size="default" className="gap-2">
                             <Plus className="h-4 w-4" /> New Project
-                        </MagneticButton>
+                        </Button>
                     </Link>
                 </div>
             </div>
@@ -67,7 +66,7 @@ export function DashboardClient({ initialProjects }: { initialProjects: ProjectD
                             Create your first documentation site to get started building beautiful docs.
                         </p>
                         <Link href="/dashboard/new">
-                            <MagneticButton size="lg">Create Project</MagneticButton>
+                            <Button size="lg">Create Project</Button>
                         </Link>
                     </GlassCard>
                 ) : (
