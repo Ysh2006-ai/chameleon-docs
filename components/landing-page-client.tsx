@@ -8,6 +8,7 @@ import { ArrowUpRight, Github, Star, Anchor } from "lucide-react";
 import MagneticButton from "@/components/ui/magnetic-button";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { SiteFooter } from "@/components/site-footer";
 
 export default function LandingPageClient({ session }: { session: any }) {
     const containerRef = useRef(null);
@@ -150,9 +151,12 @@ export default function LandingPageClient({ session }: { session: any }) {
                 </div>
             </div>
 
+
+
             {/* Feature Grid (Magazine Layout) */}
             <section ref={featureRef} className="container py-32 space-y-32">
 
+                {/* ... feature content ... */}
                 {/* Feature 1: Image Left, Text Right */}
                 <div className="grid grid-cols-1 gap-y-12 md:grid-cols-12 md:gap-x-12 items-center">
                     <div className="md:col-span-7">
@@ -192,17 +196,8 @@ export default function LandingPageClient({ session }: { session: any }) {
             </section>
 
             {/* Footer */}
-            <footer className="border-t border-border bg-secondary/30 py-5">
-                <div className="container flex flex-col items-center justify-between gap-8 md:flex-row">
-                    <div className="flex flex-col gap-2">
-                        <p className="text-xs text-muted-foreground mt-2">© 2025 Anchor. Made with ❤️</p>
-                    </div>
-                    <div className="flex gap-8 text-sm font-medium text-muted-foreground">
-                        <Link href="#" className="hover:text-foreground transition-colors">Twitter</Link>
-                        <Link href="#" className="hover:text-foreground transition-colors">GitHub</Link>
-                    </div>
-                </div>
-            </footer>
+            <SiteFooter />
         </div>
     );
 }
+

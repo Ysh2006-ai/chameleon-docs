@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { ChameleonLogo } from "@/components/ChameleonLogo";
+import { SiteFooter } from "@/components/site-footer";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -32,7 +33,7 @@ function useSmoothScroll(ref: React.RefObject<HTMLElement>) {
 
         const animate = () => {
             const diff = targetScroll - currentScroll;
-            
+
             if (Math.abs(diff) > 0.5) {
                 currentScroll += diff * ease;
                 element.scrollTop = currentScroll;
@@ -112,7 +113,7 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
         const saved = localStorage.getItem(key);
         if (saved) {
             setStoredReimaginedContent(saved);
-            setViewMode("original"); 
+            setViewMode("original");
             setWavePhase("idle");
         } else {
             setStoredReimaginedContent(null);
@@ -154,7 +155,7 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
 
     const handleReimagine = async (mode: string = reimagineMode) => {
         if (isReimagining) return;
-        
+
         setIsReimagining(true);
         setReimagineMode(mode);
         setShowLoader(true); // Show loader for Reimagine
@@ -168,7 +169,7 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
             setStoredReimaginedContent(newContent);
             localStorage.setItem(`reimagined-${project.slug}-${activePage.slug}`, newContent);
             setViewMode("reimagined");
-            
+
             // Now fade in the new content
             setWavePhase("fade-in");
 
@@ -182,26 +183,26 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
 
     const toggleView = () => {
         if (isReimagining) return;
-        
+
         setIsReimagining(true);
         setShowLoader(false); // No loader for toggle
-        
+
         // Set pending view mode for when fade-out completes
         setPendingViewMode(viewMode === "reimagined" ? "original" : "reimagined");
-        
+
         // Start fade out
         setWavePhase("fade-out");
     };
 
-    const displayContent = viewMode === "reimagined" && storedReimaginedContent 
-        ? storedReimaginedContent 
+    const displayContent = viewMode === "reimagined" && storedReimaginedContent
+        ? storedReimaginedContent
         : activePage.content;
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
-                <div 
+                <div
                     className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
                     onClick={() => setIsSidebarOpen(false)}
                 />
@@ -219,9 +220,9 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
                             <ChameleonLogo size={24} />
                             <span className="font-heading font-bold text-lg">Chameleon</span>
                         </Link>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             className="lg:hidden"
                             onClick={() => setIsSidebarOpen(false)}
                         >
@@ -232,7 +233,7 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
                     {/* Project Info */}
                     <div className="border-b border-border p-6">
                         <div className="flex items-center gap-3 mb-2">
-                            <div 
+                            <div
                                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card shadow-sm text-xl"
                                 style={{
                                     background: project.theme?.color ? `linear-gradient(135deg, ${project.theme.color}, ${project.theme.color}88)` : undefined
@@ -257,14 +258,14 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
                                 acc[section].push(page);
                                 return acc;
                             }, {});
-                            
+
                             // Sort sections - use project sectionOrder if available
                             const availableSections = Object.keys(groupedPages);
                             const storedOrder = project.sectionOrder || [];
                             const orderedFromStorage = storedOrder.filter((s: string) => availableSections.includes(s));
                             const newSections = availableSections.filter(s => !storedOrder.includes(s) && s !== "Uncategorized");
                             const sections = ["Uncategorized", ...orderedFromStorage, ...newSections.sort()].filter(s => availableSections.includes(s));
-                            
+
                             return sections.map(section => (
                                 <div key={section} className={section !== "Uncategorized" ? "pt-4" : ""}>
                                     {/* Section Header - only show for non-Uncategorized */}
@@ -280,15 +281,15 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
                                         {groupedPages[section].map((page: any) => {
                                             const isActive = currentPageSlug === page.slug;
                                             return (
-                                                <Link 
-                                                    key={page._id} 
+                                                <Link
+                                                    key={page._id}
                                                     href={`/p/${project.slug}?page=${page.slug}`}
                                                     onClick={() => setIsSidebarOpen(false)}
                                                 >
                                                     <div className={cn(
                                                         "group flex items-center justify-between rounded-md px-3 py-2 text-sm transition-all",
-                                                        isActive 
-                                                            ? "bg-primary/15 text-primary font-medium" 
+                                                        isActive
+                                                            ? "bg-primary/15 text-primary font-medium"
                                                             : "text-muted-foreground hover:bg-muted/50 hover:text-foreground font-normal"
                                                     )}>
                                                         <span>{page.title}</span>
@@ -320,9 +321,9 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
                 {/* Header with Reimagine Controls */}
                 <header className="sticky top-0 z-30 flex h-16 items-center justify-between px-4 lg:px-6">
                     <div className="flex items-center gap-4">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             className="lg:hidden"
                             onClick={() => setIsSidebarOpen(true)}
                         >
@@ -334,9 +335,9 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
                     <div className="flex items-center gap-3">
                         {/* Toggle Button (Original <-> Reimagined) */}
                         {storedReimaginedContent && !isReimagining ? (
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={toggleView}
                                 disabled={wavePhase !== "idle"}
                                 className="gap-2"
@@ -350,9 +351,9 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
                         <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg border border-border">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
                                         className="h-8 gap-2 text-xs font-medium hover:bg-background/50"
                                         disabled={isReimagining}
                                     >
@@ -362,7 +363,7 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-40">
                                     {REIMAGINE_MODES.map((mode) => (
-                                        <DropdownMenuItem 
+                                        <DropdownMenuItem
                                             key={mode.id}
                                             onClick={() => setReimagineMode(mode.id)}
                                             className="gap-2 cursor-pointer text-xs"
@@ -376,7 +377,7 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
 
                             <div className="w-px h-4 bg-border mx-1" />
 
-                            <Button 
+                            <Button
                                 size="sm"
                                 onClick={() => handleReimagine()}
                                 disabled={isReimagining}
@@ -407,17 +408,20 @@ export function ReaderClient({ project, pages, activePage }: ReaderClientProps) 
                         </p>
                     </div>
 
+
+
                     {/* Wave Transition Animation */}
-                    <WaveTransition 
-                        phase={wavePhase} 
+                    <WaveTransition
+                        phase={wavePhase}
                         showLoader={showLoader}
                         onPhaseComplete={handlePhaseComplete}
                     >
-                        <MarkdownRenderer 
-                            content={displayContent} 
+                        <MarkdownRenderer
+                            content={displayContent}
                         />
                     </WaveTransition>
                 </div>
+                <SiteFooter />
             </main>
         </div>
     );
